@@ -1,0 +1,237 @@
+# Home Assistant package: statistics and KPIs for the ESPHome heat exchanger logger.
+#
+# Install (see homeassistant/README.md):
+#   configuration.yaml ->  homeassistant:
+#                            packages: !include_dir_named packages
+#   copy this file to <config>/packages/heat_exchanger.yaml
+#
+# Entity IDs below assume the ESPHome device name "heat-exchanger-logger" with
+# friendly name "Heat Exchanger Logger" (as in esphome/heat-exchanger-logger.yaml).
+#
+# Heat exchanger model: COUNTERFLOW. For a parallel-flow unit change the two
+# temperature differences in the LMTD template (marked below).
+
+# ---------------------------------------------------------------------------
+# Settings adjustable from the UI
+# ---------------------------------------------------------------------------
+input_number:
+  heat_exchanger_ua_reference:
+    name: Heat exchanger UA reference (clean)
+    icon: mdi:ruler
+    unit_of_measurement: kW/K
+    min: 0
+    max: 1000
+    step: 0.01
+    mode: box
+  heat_exchanger_active_threshold:
+    name: Heat exchanger active threshold
+    icon: mdi:flash-outline
+    unit_of_measurement: kW
+    # No `initial:` so a value set in the UI survives restarts (first value = min).
+    min: 0.1
+    max: 100
+    step: 0.1
+    mode: box
+
+# ---------------------------------------------------------------------------
+# Energy per period (from the device's ever-increasing energy counter)
+# ---------------------------------------------------------------------------
+utility_meter:
+  heat_exchanger_energy_daily:
+    name: Heat exchanger energy today
+    unique_id: heat_exchanger_energy_daily
+    source: sensor.heat_exchanger_logger_heat_energy
+    cycle: daily
+  heat_exchanger_energy_weekly:
+    name: Heat exchanger energy this week
+    unique_id: heat_exchanger_energy_weekly
+    source: sensor.heat_exchanger_logger_heat_energy
+    cycle: weekly
+  heat_exchanger_energy_monthly:
+    name: Heat exchanger energy this month
+    unique_id: heat_exchanger_energy_monthly
+    source: sensor.heat_exchanger_logger_heat_energy
+    cycle: monthly
+  heat_exchanger_energy_yearly:
+    name: Heat exchanger energy this year
+    unique_id: heat_exchanger_energy_yearly
+    source: sensor.heat_exchanger_logger_heat_energy
+    cycle: yearly
+
+# ---------------------------------------------------------------------------
+# Derived KPIs
+# ---------------------------------------------------------------------------
+template:
+  - binary_sensor:
+      - name: Heat exchanger active
+        unique_id: heat_exchanger_active
+        icon: mdi:heat-wave
+        state: >
+          {{ states('sensor.heat_exchanger_logger_heat_power') | float(0)
+             > states('input_number.heat_exchanger_active_threshold') | float(0.5) }}
+        delay_on: "00:01:00"
+        delay_off: "00:02:00"
+
+  - sensor:
+      # Thermal effectiveness ε = Q / Q_max. The side with the smaller heat
+      # capacity rate has the larger temperature change, so ε is the larger of
+      # the two temperature ratios. Only meaningful while the unit is active.
+      - name: Heat exchanger effectiveness
+        unique_id: heat_exchanger_effectiveness
+        icon: mdi:percent
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >
+          {% set tpi = states('sensor.heat_exchanger_logger_primary_inlet_temperature') | float(none) %}
+          {% set tsi = states('sensor.heat_exchanger_logger_secondary_inlet_temperature') | float(none) %}
+          {{ is_state('binary_sensor.heat_exchanger_active', 'on')
+             and has_value('sensor.heat_exchanger_logger_primary_outlet_temperature')
+             and has_value('sensor.heat_exchanger_logger_secondary_outlet_temperature')
+             and tpi is not none and tsi is not none and (tpi - tsi) > 1 }}
+        state: >
+          {% set tpi = states('sensor.heat_exchanger_logger_primary_inlet_temperature') | float %}
+          {% set tpo = states('sensor.heat_exchanger_logger_primary_outlet_temperature') | float %}
+          {% set tsi = states('sensor.heat_exchanger_logger_secondary_inlet_temperature') | float %}
+          {% set tso = states('sensor.heat_exchanger_logger_secondary_outlet_temperature') | float %}
+          {% set eps_p = (tpi - tpo) / (tpi - tsi) %}
+          {% set eps_s = (tso - tsi) / (tpi - tsi) %}
+          {{ (100 * [eps_p, eps_s] | max) | round(1) }}
+
+      # Log-mean temperature difference (counterflow).
+      - name: Heat exchanger LMTD
+        unique_id: heat_exchanger_lmtd
+        icon: mdi:thermometer-lines
+        unit_of_measurement: K
+        state_class: measurement
+        availability: >
+          {% set tpi = states('sensor.heat_exchanger_logger_primary_inlet_temperature') | float(none) %}
+          {% set tpo = states('sensor.heat_exchanger_logger_primary_outlet_temperature') | float(none) %}
+          {% set tsi = states('sensor.heat_exchanger_logger_secondary_inlet_temperature') | float(none) %}
+          {% set tso = states('sensor.heat_exchanger_logger_secondary_outlet_temperature') | float(none) %}
+          {% if none in [tpi, tpo, tsi, tso] %}false{% else %}
+          {# counterflow; parallel flow: d1 = tpi - tsi, d2 = tpo - tso #}
+          {% set d1 = tpi - tso %}{% set d2 = tpo - tsi %}
+          {{ d1 > 0 and d2 > 0 }}{% endif %}
+        state: >
+          {% set tpi = states('sensor.heat_exchanger_logger_primary_inlet_temperature') | float %}
+          {% set tpo = states('sensor.heat_exchanger_logger_primary_outlet_temperature') | float %}
+          {% set tsi = states('sensor.heat_exchanger_logger_secondary_inlet_temperature') | float %}
+          {% set tso = states('sensor.heat_exchanger_logger_secondary_outlet_temperature') | float %}
+          {# counterflow; parallel flow: d1 = tpi - tsi, d2 = tpo - tso #}
+          {% set d1 = tpi - tso %}{% set d2 = tpo - tsi %}
+          {% if (d1 - d2) | abs < 0.01 %}{{ d1 | round(2) }}
+          {% else %}{{ ((d1 - d2) / log(d1 / d2)) | round(2) }}{% endif %}
+
+      # UA = P / LMTD: heat transfer coefficient × area. Falls when the unit fouls
+      # or scales up. Only computed while active (small P/LMTD is mostly noise).
+      - name: Heat exchanger UA
+        unique_id: heat_exchanger_ua
+        icon: mdi:swap-horizontal-bold
+        unit_of_measurement: kW/K
+        state_class: measurement
+        availability: >
+          {{ is_state('binary_sensor.heat_exchanger_active', 'on')
+             and has_value('sensor.heat_exchanger_logger_heat_power')
+             and states('sensor.heat_exchanger_lmtd') | float(0) > 0.5 }}
+        state: >
+          {{ (states('sensor.heat_exchanger_logger_heat_power') | float
+              / states('sensor.heat_exchanger_lmtd') | float) | round(3) }}
+
+      # UA (24 h average) relative to the reference taken on a clean unit.
+      - name: Heat exchanger UA relative
+        unique_id: heat_exchanger_ua_relative
+        icon: mdi:gauge
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >
+          {{ has_value('sensor.heat_exchanger_ua_24h_mean')
+             and states('input_number.heat_exchanger_ua_reference') | float(0) > 0 }}
+        state: >
+          {{ (100 * states('sensor.heat_exchanger_ua_24h_mean') | float
+              / states('input_number.heat_exchanger_ua_reference') | float) | round(1) }}
+
+# ---------------------------------------------------------------------------
+# Rolling statistics (live values; long-term history comes from the recorder's
+# long-term statistics, which HA keeps forever for every state_class sensor)
+# ---------------------------------------------------------------------------
+sensor:
+  - platform: statistics
+    name: Heat exchanger power 24h mean
+    unique_id: heat_exchanger_power_24h_mean
+    entity_id: sensor.heat_exchanger_logger_heat_power
+    state_characteristic: average_linear
+    max_age:
+      hours: 24
+    sampling_size: 10000
+    keep_last_sample: true
+
+  - platform: statistics
+    name: Heat exchanger power 24h max
+    unique_id: heat_exchanger_power_24h_max
+    entity_id: sensor.heat_exchanger_logger_heat_power
+    state_characteristic: value_max
+    max_age:
+      hours: 24
+    sampling_size: 10000
+
+  - platform: statistics
+    name: Heat exchanger UA 24h mean
+    unique_id: heat_exchanger_ua_24h_mean
+    entity_id: sensor.heat_exchanger_ua
+    state_characteristic: mean
+    max_age:
+      hours: 24
+    sampling_size: 10000
+    keep_last_sample: true
+
+  - platform: history_stats
+    name: Heat exchanger operating time today
+    unique_id: heat_exchanger_operating_time_today
+    entity_id: binary_sensor.heat_exchanger_active
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+
+# ---------------------------------------------------------------------------
+# Alerts
+# ---------------------------------------------------------------------------
+automation:
+  - id: heat_exchanger_signal_missing
+    alias: Heat exchanger - CAN signal missing
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.heat_exchanger_logger_heat_exchanger_signal_missing
+        to: "on"
+        for: "00:10:00"
+      - trigger: state
+        entity_id: binary_sensor.heat_exchanger_logger_can_bus_receiving
+        to: "off"
+        for: "00:10:00"
+    actions:
+      - action: persistent_notification.create
+        data:
+          notification_id: heat_exchanger_signal_missing
+          title: Heat exchanger logger
+          message: >
+            No valid data from the heat exchanger for 10 minutes
+            (CAN frames: {{ states('sensor.heat_exchanger_logger_can_frame_rate') }} /s).
+            Check the RJ45 CAN cable, bus termination and the heat exchanger itself.
+
+  - id: heat_exchanger_fouling
+    alias: Heat exchanger - performance dropped (fouling?)
+    mode: single
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.heat_exchanger_ua_relative
+        below: 80
+        for: "24:00:00"
+    actions:
+      - action: persistent_notification.create
+        data:
+          notification_id: heat_exchanger_fouling
+          title: Heat exchanger performance
+          message: >
+            UA is at {{ states('sensor.heat_exchanger_ua_relative') }} % of the clean
+            reference for more than a day. The heat exchanger may need cleaning.

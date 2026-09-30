@@ -1,0 +1,184 @@
+# Heat exchanger signals (datapoints from the signal map in
+# heat-exchanger-logger.yaml) and derived values.
+#
+# Power and energy come from the heat meter connected to the TopTronic
+# (calibrated M-bus meter). The logger does not integrate power itself.
+
+sensor:
+  # ---- Temperatures ------------------------------------------------------------
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_t_prim_in
+    name: Primary inlet temperature
+    function_group: ${t_prim_in.group}
+    function_number: ${t_prim_in.number}
+    datapoint: ${t_prim_in.datapoint}
+    type: ${t_prim_in.type}
+    update_interval: ${t_prim_in.poll}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: ${t_prim_in.scale}
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_t_prim_out
+    name: Primary outlet temperature
+    function_group: ${t_prim_out.group}
+    function_number: ${t_prim_out.number}
+    datapoint: ${t_prim_out.datapoint}
+    type: ${t_prim_out.type}
+    update_interval: ${t_prim_out.poll}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: ${t_prim_out.scale}
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_t_sec_in
+    name: Secondary inlet temperature
+    function_group: ${t_sec_in.group}
+    function_number: ${t_sec_in.number}
+    datapoint: ${t_sec_in.datapoint}
+    type: ${t_sec_in.type}
+    update_interval: ${t_sec_in.poll}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: ${t_sec_in.scale}
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_t_sec_out
+    name: Secondary outlet temperature
+    function_group: ${t_sec_out.group}
+    function_number: ${t_sec_out.number}
+    datapoint: ${t_sec_out.datapoint}
+    type: ${t_sec_out.type}
+    update_interval: ${t_sec_out.poll}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: ${t_sec_out.scale}
+      - timeout: ${signal_timeout}
+
+  # ---- Heat meter ----------------------------------------------------------------
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_power
+    name: Heat power
+    function_group: ${heat_power.group}
+    function_number: ${heat_power.number}
+    datapoint: ${heat_power.datapoint}
+    type: ${heat_power.type}
+    update_interval: ${heat_power.poll}
+    unit_of_measurement: kW
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: ${heat_power.scale}
+      - timeout: ${signal_timeout}
+
+  # Energy counter in kWh (HA Energy dashboard / utility meters).
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_energy
+    name: Heat energy
+    function_group: ${heat_energy.group}
+    function_number: ${heat_energy.number}
+    datapoint: ${heat_energy.datapoint}
+    type: ${heat_energy.type}
+    update_interval: ${heat_energy.poll}
+    unit_of_measurement: kWh
+    device_class: energy
+    state_class: total_increasing
+    accuracy_decimals: 0
+    filters:
+      - multiply: ${heat_energy.scale}
+      # A meter counter never decreases, so 0 and values below the last one are
+      # treated as glitches and dropped (a drop would look like a meter reset to
+      # HA's total_increasing statistics). A lower value that persists for 10
+      # readings (~5 min) is accepted: replaced meter, or the previous value was the glitch.
+      - lambda: |-
+          static float last = 0.0f;
+          static uint8_t lower_count = 0;
+          if (std::isnan(x) || x <= 0.0f) return {};
+          if (x < last && ++lower_count < 10) return {};
+          lower_count = 0;
+          last = x;
+          return x;
+
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_flow_prim
+    name: Primary flow
+    function_group: ${flow_prim.group}
+    function_number: ${flow_prim.number}
+    datapoint: ${flow_prim.datapoint}
+    type: ${flow_prim.type}
+    update_interval: ${flow_prim.poll}
+    unit_of_measurement: m³/h
+    device_class: volume_flow_rate
+    state_class: measurement
+    accuracy_decimals: 3
+    filters:
+      - multiply: ${flow_prim.scale}
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hx_meter_status
+    name: Heat meter status
+    function_group: ${meter_status.group}
+    function_number: ${meter_status.number}
+    datapoint: ${meter_status.datapoint}
+    type: ${meter_status.type}
+    update_interval: ${meter_status.poll}
+    icon: mdi:alert-circle-outline
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    filters:
+      - multiply: ${meter_status.scale}
+      - timeout: ${signal_timeout}
+
+  # ---- Derived values ------------------------------------------------------------
+  - platform: template
+    id: hx_dt_prim
+    name: Primary temperature drop
+    unit_of_measurement: K
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: ${poll_interval}
+    lambda: return id(hx_t_prim_in).state - id(hx_t_prim_out).state;
+
+  - platform: template
+    id: hx_dt_sec
+    name: Secondary temperature rise
+    unit_of_measurement: K
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: ${poll_interval}
+    lambda: return id(hx_t_sec_out).state - id(hx_t_sec_in).state;
+
+binary_sensor:
+  - platform: template
+    name: Heat exchanger signal missing
+    device_class: problem
+    entity_category: diagnostic
+    # ON (= problem) when a core heat meter signal is missing.
+    lambda: |-
+      return std::isnan(id(hx_power).state) || std::isnan(id(hx_t_prim_in).state) ||
+             std::isnan(id(hx_t_prim_out).state);

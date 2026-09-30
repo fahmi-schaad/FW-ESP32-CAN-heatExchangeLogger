@@ -1,0 +1,967 @@
+sensor:
+  - platform: toptronic
+    name: "AF1 - Aussenf\xFChler 1"
+    device_type: WEZ
+    function_group: 0
+    function_number: 0
+    datapoint: 0
+    id: WEZ_0_0_0
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Normal-Raumtemperatur Heizbetrieb (1)
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 3051
+    id: WEZ_1_0_3051
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Spar-Raumtemperatur Heizbetrieb (1)
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 3053
+    id: WEZ_1_0_3053
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Normal-Raumtemperatur Heizbetrieb (2)
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 3051
+    id: WEZ_1_1_3051
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Spar-Raumtemperatur Heizbetrieb (2)
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 3053
+    id: WEZ_1_1_3053
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Normal-Raumtemperatur Heizbetrieb (3)
+    device_type: WEZ
+    function_group: 1
+    function_number: 2
+    datapoint: 3051
+    id: WEZ_1_2_3051
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Spar-Raumtemperatur Heizbetrieb (3)
+    device_type: WEZ
+    function_group: 1
+    function_number: 2
+    datapoint: 3053
+    id: WEZ_1_2_3053
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Normal-Warmwassertemperatur
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 5051
+    id: WEZ_2_0_5051
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Spar-Warmwassertemperatur
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 5086
+    id: WEZ_2_0_5086
+    type: U8
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: Warmwasser-Soll
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 1004
+    id: WEZ_2_0_1004
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Warmwasser-Ist SF
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 4
+    id: WEZ_2_0_4
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Vorlauf-Ist (1)
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 2
+    id: WEZ_1_0_2
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Vorlauf-Ist (2)
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 2
+    id: WEZ_1_1_2
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Vorlauf-Ist (3)
+    device_type: WEZ
+    function_group: 1
+    function_number: 2
+    datapoint: 2
+    id: WEZ_1_2_2
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-celsius
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: WEZ-Leistung
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 30
+    id: WEZ_60_254_30
+    type: U8
+    unit_of_measurement: '%'
+    icon: mdi:percent
+    device_class: power_factor
+    state_class: measurement
+  - platform: toptronic
+    name: Elektrische Gesamtenergie WEZ MWh
+    device_type: WEZ
+    function_group: 10
+    function_number: 1
+    datapoint: 23009
+    id: WEZ_10_1_23009
+    type: U32
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: MWh
+    icon: mdi:flash
+    device_class: energy
+    state_class: measurement
+  - platform: toptronic
+    name: "W\xE4rmemenge Heizen"
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 47
+    id: WEZ_60_254_47
+    type: U32
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: MWh
+    icon: mdi:flash
+    device_class: energy
+    state_class: measurement
+  - platform: toptronic
+    name: "W\xE4rmemenge WW"
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 55
+    id: WEZ_60_254_55
+    type: U32
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: MWh
+    icon: mdi:flash
+    device_class: energy
+    state_class: measurement
+  - platform: toptronic
+    name: Smart-Grid (Offset) WW-Sollwert
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 5077
+    id: WEZ_2_0_5077
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-kelvin
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: SmartGrid Offset Raum-Sollw. Heizen (1)
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 7031
+    id: WEZ_1_0_7031
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-kelvin
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: SmartGrid Offset Raum-Sollw. Heizen (2)
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 7031
+    id: WEZ_1_1_7031
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-kelvin
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: SmartGrid Offset Raum-Sollw. Heizen (3)
+    device_type: WEZ
+    function_group: 1
+    function_number: 2
+    datapoint: 7031
+    id: WEZ_1_2_7031
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-kelvin
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: "SmartGrid Offset Raum-Sollw. K\xFChlen (1)"
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 7046
+    id: WEZ_1_0_7046
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-kelvin
+    device_class: temperature
+    state_class: measurement
+    internal: true
+  - platform: toptronic
+    name: "SmartGrid Offset Raum-Sollw. K\xFChlen (2)"
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 7046
+    id: WEZ_1_1_7046
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:temperature-kelvin
+    device_class: temperature
+    state_class: measurement
+    internal: true
+
+  # ---------------------------------------------------------------------------
+  # Verified on an independent UltraSource B comfort C17 (TTE-WEZ, commissioned
+  # 2021) via CAN GET plus 5-minute long-term logging, cross-checked against the
+  # energy counters and Hoval's own Modbus register list.
+  # Evidence and raw CSVs: https://github.com/newstedaut/hoval_datapoints
+  # ---------------------------------------------------------------------------
+  - platform: toptronic
+    name: COP aktuell
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 45
+    id: WEZ_60_254_45
+    type: U8
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    icon: mdi:gauge
+    state_class: measurement
+    # Live COP while the compressor runs; reads 0 when idle.
+  - platform: toptronic
+    name: Waermemenge Kuehlen
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 51
+    id: WEZ_60_254_51
+    type: U32
+    accuracy_decimals: 3
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: MWh
+    icon: mdi:snowflake
+    device_class: energy
+    state_class: total_increasing
+    # Lifetime cooling energy counter -- the cooling counterpart to dp 47 / dp
+    # 55.
+  - platform: toptronic
+    name: Wasserdruck
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 32
+    id: WEZ_60_254_32
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - lambda: 'return (x < -3000.0f) ? NAN : x;'   # 0x8000 = invalid / no sensor
+    unit_of_measurement: bar
+    icon: mdi:gauge
+    state_class: measurement
+    # Reads 0x8000 (invalid) when no pressure sensor is wired; filtered to NaN
+    # below.
+  - platform: toptronic
+    name: Quelle Vorlauf (Verdampfer ein)
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 84
+    id: WEZ_60_254_84
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:thermometer
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Quelle Ruecklauf (Verdampfer Oberflaeche)
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 85
+    id: WEZ_60_254_85
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: "\xB0C"
+    icon: mdi:thermometer
+    device_class: temperature
+    state_class: measurement
+  - platform: toptronic
+    name: Laufzeit Heizbetrieb
+    device_type: WEZ
+    function_group: 60
+    function_number: 7
+    datapoint: 1033
+    id: WEZ_60_7_1033
+    type: S32
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: h
+    icon: mdi:clock-outline
+    device_class: duration
+    state_class: total_increasing
+    # Scale 0.1 h. Verified: 71.979 MWh / 10156.3 h = 7.1 kW mean output on a 17
+    # kW unit.
+  - platform: toptronic
+    name: Laufzeit Kuehlbetrieb
+    device_type: WEZ
+    function_group: 60
+    function_number: 7
+    datapoint: 1034
+    id: WEZ_60_7_1034
+    type: S32
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: h
+    icon: mdi:clock-outline
+    device_class: duration
+    state_class: total_increasing
+    # NOTE: Hoval's own list names this dp "Operating hours DHW" elsewhere --
+    # that name is wrong, the values say cooling.
+  - platform: toptronic
+    name: Laufzeit Warmwasser
+    device_type: WEZ
+    function_group: 60
+    function_number: 7
+    datapoint: 1035
+    id: WEZ_60_7_1035
+    type: S32
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+    unit_of_measurement: h
+    icon: mdi:clock-outline
+    device_class: duration
+    state_class: total_increasing
+    # NOTE: same name collision as dp 1034, in the other direction.
+  - platform: toptronic
+    name: Schaltzyklen Waermeerzeuger (gesamt)
+    device_type: WEZ
+    function_group: 10
+    function_number: 1
+    datapoint: 2080
+    id: WEZ_10_1_2080
+    type: U32
+    accuracy_decimals: 0
+    icon: mdi:counter
+    state_class: total_increasing
+    # TOTAL starts. Do not confuse with dp 2083, which only counts starts above
+    # 50 % modulation (~2.4x lower).
+  - platform: toptronic
+    name: Betriebsstunden Waermeerzeuger
+    device_type: WEZ
+    function_group: 10
+    function_number: 1
+    datapoint: 2081
+    id: WEZ_10_1_2081
+    type: U32
+    accuracy_decimals: 0
+    unit_of_measurement: h
+    icon: mdi:clock-outline
+    device_class: duration
+    state_class: total_increasing
+    # Appears twice in Hoval's register list (two mirrored register pairs), same
+    # value.
+  - platform: toptronic
+    name: Betriebsstunden ueber 50% Modulation
+    device_type: WEZ
+    function_group: 10
+    function_number: 1
+    datapoint: 2082
+    id: WEZ_10_1_2082
+    type: U32
+    accuracy_decimals: 0
+    unit_of_measurement: h
+    icon: mdi:clock-outline
+    device_class: duration
+    state_class: total_increasing
+  - platform: toptronic
+    name: Schaltzyklen ueber 50% Modulation
+    device_type: WEZ
+    function_group: 10
+    function_number: 1
+    datapoint: 2083
+    id: WEZ_10_1_2083
+    type: U32
+    accuracy_decimals: 0
+    icon: mdi:counter
+    state_class: total_increasing
+  - platform: toptronic
+    name: Anlageleistung-Sollwert Heizen
+    device_type: WEZ
+    function_group: 3
+    function_number: 0
+    datapoint: 2040
+    id: WEZ_3_0_2040
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - lambda: 'return (x <= -126.5f) ? NAN : x;'   # -127.0 = invalid marker
+    unit_of_measurement: '%'
+    icon: mdi:percent
+    state_class: measurement
+    # -100.0 = this channel requests nothing (valid reading). -127.0 = invalid,
+    # filtered to NaN.
+  - platform: toptronic
+    name: Anlageleistung-Sollwert Warmwasser
+    device_type: WEZ
+    function_group: 3
+    function_number: 0
+    datapoint: 2041
+    id: WEZ_3_0_2041
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - lambda: 'return (x <= -126.5f) ? NAN : x;'   # -127.0 = invalid marker
+    unit_of_measurement: '%'
+    icon: mdi:percent
+    state_class: measurement
+  - platform: toptronic
+    name: Anlageleistung-Sollwert Kuehlen
+    device_type: WEZ
+    function_group: 3
+    function_number: 0
+    datapoint: 2042
+    id: WEZ_3_0_2042
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - lambda: 'return (x <= -126.5f) ? NAN : x;'   # -127.0 = invalid marker
+    unit_of_measurement: '%'
+    icon: mdi:percent
+    state_class: measurement
+  - platform: toptronic
+    name: Leistungs-Sollwert Waermeerzeuger
+    device_type: WEZ
+    function_group: 4
+    function_number: 0
+    datapoint: 1009
+    id: WEZ_4_0_1009
+    type: S16
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - lambda: 'return (x <= -126.5f) ? NAN : x;'   # -127.0 = invalid marker
+    unit_of_measurement: '%'
+    icon: mdi:percent
+    state_class: measurement
+    # Equals whichever of dp 2040/2041/2042 is active (99.1 % match over 6587
+    # samples).
+  - platform: toptronic
+    name: Anforderung Waermeerzeuger
+    device_type: WEZ
+    function_group: 4
+    function_number: 0
+    datapoint: 2043
+    id: WEZ_4_0_2043
+    type: U8
+    accuracy_decimals: 0
+    unit_of_measurement: '%'
+    icon: mdi:toggle-switch
+    state_class: measurement
+    # Despite the name this is binary: only 0 or 100 were ever observed.
+
+text_sensor:
+  - platform: toptronic
+    name: Betriebswahl Heizung (1)
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 3050
+    id: WEZ_1_0_3050
+    options:
+      - Standby
+      - Woche 1
+      - Woche 2
+      - Konstant
+      - Sparbetrieb
+      - Handbetrieb Heizen
+      - "Handbetrieb K\xFChlen"
+    values:
+      - 0
+      - 1
+      - 2
+      - 4
+      - 5
+      - 7
+      - 8
+  - platform: toptronic
+    name: Betriebswahl Heizung (2)
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 3050
+    id: WEZ_1_1_3050
+    options:
+      - Standby
+      - Woche 1
+      - Woche 2
+      - Konstant
+      - Sparbetrieb
+      - Handbetrieb Heizen
+      - "Handbetrieb K\xFChlen"
+    values:
+      - 0
+      - 1
+      - 2
+      - 4
+      - 5
+      - 7
+      - 8
+  - platform: toptronic
+    name: Betriebswahl Heizung (3)
+    device_type: WEZ
+    function_group: 1
+    function_number: 2
+    datapoint: 3050
+    id: WEZ_1_2_3050
+    options:
+      - Standby
+      - Woche 1
+      - Woche 2
+      - Konstant
+      - Sparbetrieb
+      - Handbetrieb Heizen
+      - "Handbetrieb K\xFChlen"
+    values:
+      - 0
+      - 1
+      - 2
+      - 4
+      - 5
+      - 7
+      - 8
+  - platform: toptronic
+    name: Betriebswahl Warmwasser
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 5050
+    id: WEZ_2_0_5050
+    options:
+      - Standby
+      - Woche 1
+      - Woche 2
+      - Konstant
+      - Sparbetrieb
+    values:
+      - 0
+      - 1
+      - 2
+      - 4
+      - 6
+  - platform: toptronic
+    name: Status Heizkreisregelung (1)
+    device_type: WEZ
+    function_group: 1
+    function_number: 0
+    datapoint: 2051
+    id: WEZ_1_0_2051
+    options:
+      - Abgeschaltet
+      - Heizen normal
+      - Heizen Komfort
+      - Heizen Eco
+      - Frostschutz
+      - Ferien
+      - Party
+      - "K\xFChlen normal"
+      - "K\xFChlen Komfort"
+      - "K\xFChlen Eco"
+      - "ST\xD6RUNG"
+      - Handbetrieb
+      - "Schutz-K\xFChlbetrieb"
+      - "K\xFChlen extern/konstant"
+      - Heizen extern/konstant
+      - SmartGrid-Vorzug
+    values:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 22
+      - 23
+      - 26
+  - platform: toptronic
+    name: Status Heizkreisregelung (2)
+    device_type: WEZ
+    function_group: 1
+    function_number: 1
+    datapoint: 2051
+    id: WEZ_1_1_2051
+    options:
+      - Abgeschaltet
+      - Heizen normal
+      - Heizen Komfort
+      - Heizen Eco
+      - Frostschutz
+      - Ferien
+      - Party
+      - "K\xFChlen normal"
+      - "K\xFChlen Komfort"
+      - "K\xFChlen Eco"
+      - "ST\xD6RUNG"
+      - Handbetrieb
+      - "Schutz-K\xFChlbetrieb"
+      - "K\xFChlen extern/konstant"
+      - Heizen extern/konstant
+      - SmartGrid-Vorzug
+    values:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 22
+      - 23
+      - 26
+  - platform: toptronic
+    name: Status Warmwasserregelung
+    device_type: WEZ
+    function_group: 2
+    function_number: 0
+    datapoint: 2052
+    id: WEZ_2_0_2052
+    options:
+      - Aus
+      - Laden normal
+      - Laden Komfort
+      - "ST\xD6RUNG"
+      - Zapfung
+      - Laden reduziert
+      - SmartGrid-Vorzug
+      - SmartGrid-Zwang
+    values:
+      - 0
+      - 1
+      - 2
+      - 5
+      - 6
+      - 8
+      - 12
+      - 13
+  - platform: toptronic
+    name: Betriebsstatus
+    device_type: WEZ
+    function_group: 60
+    function_number: 254
+    datapoint: 34
+    id: WEZ_60_254_34
+    options:
+      - Aus
+      - Heizen
+      - "Aktiv-K\xFChlen"
+      - Sperre
+      - WW-Laden
+      - Frostschutz
+      - WEZ-Temp zu tief
+      - VL zu hoch
+      - Abtauen
+      - "Passiv-K\xFChlen"
+      - "Hochdruck-St\xF6rung"
+      - "Niederdruck-St\xF6rung"
+      - Wiederanlauf
+      - EVU-Sperre
+      - Vorlaufzeit
+      - Nachlaufzeit
+      - MOP
+      - Abtauung erfolglos
+      - Kondensatorpumpe
+      - "Inverter-St\xF6rung"
+      - "\xD6lvorw\xE4rmung"
+      - Kaltstart
+    values:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 11
+      - 12
+      - 16
+      - 17
+      - 18
+      - 19
+      - 44
+      - 49
+      - 51
+      - 55
+      - 97
+      - 98
+  - platform: toptronic
+    name: "Betriebswahl W\xE4rmeerzeuger"
+    device_type: WEZ
+    function_group: 10
+    function_number: 1
+    datapoint: 9075
+    id: WEZ_10_1_9075
+    options:
+      - Deakt.
+      - Automatik
+      - Heizen
+      - "K\xFChlen"
+    values:
+      - 0
+      - 1
+      - 4
+      - 5
+  - platform: toptronic
+    name: "Status K\xFChlventil aktiv UKA"
+    device_type: WEZ
+    function_group: 3
+    function_number: 0
+    datapoint: 22024
+    id: WEZ_3_0_22024
+    options:
+      - zu
+      - offen
+    values:
+      - 0
+      - 1
+  - platform: toptronic
+    name: Status Smart Grid
+    device_type: WEZ
+    function_group: 0
+    function_number: 0
+    datapoint: 21090
+    id: WEZ_0_0_21090
+    options:
+      - Normal
+      - Vorzugbetrieb
+      - Gesperrt
+      - Abnahmezwang
+      - inaktiv
+    values:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 255
+  - platform: toptronic
+    name: "Smart Grid \xFCber Systembus"
+    device_type: WEZ
+    function_group: 0
+    function_number: 0
+    datapoint: 38012
+    id: WEZ_0_0_38012
+    options:
+      - Normal
+      - Vorzugbetrieb
+      - Gesperrt
+      - Abnahmezwang
+    values:
+      - 0
+      - 1
+      - 2
+      - 3
+  - platform: toptronic
+    name: "Ausl\xF6ser Smart Grid Funktion"
+    device_type: WEZ
+    function_group: 0
+    function_number: 0
+    datapoint: 38013
+    id: WEZ_0_0_38013
+    options:
+      - Aus
+      - Eingangskontakte
+      - Systembus
+      - "Leistung ged\xE4mpft"
+    values:
+      - 0
+      - 1
+      - 2
+      - 3
+

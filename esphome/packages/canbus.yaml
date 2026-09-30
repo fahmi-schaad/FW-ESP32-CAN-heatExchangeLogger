@@ -1,0 +1,89 @@
+# CAN bus + Hoval TopTronic hub, bus health and protocol debug switches.
+# Expects substitutions from heat-exchanger-logger.yaml (pins, hoval_*).
+
+globals:
+  - id: can_frames_rx
+    type: uint32_t
+    initial_value: "0"
+
+canbus:
+  - platform: esp32_can
+    id: cbus
+    tx_pin: ${can_tx_pin}
+    rx_pin: ${can_rx_pin}
+    bit_rate: 50KBPS            # Hoval TopTronic E bus speed
+    # NORMAL, not LISTENONLY: the logger is an active GW node that sends GET requests.
+    mode: NORMAL
+    rx_queue_len: 128           # absorbs bursts of multi-frame responses
+    use_extended_id: true
+    can_id: 0                   # unused, the toptronic component builds its own IDs
+    on_frame:
+      # Bus health only (count every extended frame). Decoding is done by toptronic.
+      - can_id: 0
+        can_id_mask: 0
+        use_extended_id: true
+        then:
+          - lambda: id(can_frames_rx)++;
+
+toptronic:
+  - id: hoval
+    canbus_id: cbus
+    device_type: ${hoval_device_type}
+    device_addr: ${hoval_device_addr}
+    language: ${hoval_language}
+    # false (production): poll only the signal map's datapoints, read-only.
+    # true (discovery firmware): generate all preset entities of the device type.
+    presets: ${hoval_presets}
+    # Write safety (defaults, stated explicitly): no SET before the value was read
+    # at least once, and at most one SET per datapoint every 2 s.
+    reject_writes_before_read: true
+    write_min_interval: 2s
+
+switch:
+  # Protocol debugging. Both switch themselves off after 120 s and on reboot.
+  - platform: toptronic
+    name: CAN candump debug
+    id: candump_debug_switch
+    icon: mdi:bug
+    entity_category: diagnostic
+    toptronic_id: hoval
+    debug_mode: CANDUMP
+  - platform: toptronic
+    # Logs GET/RESPONSE frames with their CAN IDs: finds the device address.
+    name: CAN find device debug
+    id: find_can_id_debug_switch
+    icon: mdi:magnify
+    entity_category: diagnostic
+    toptronic_id: hoval
+    debug_mode: FIND_CAN_ID
+
+sensor:
+  - platform: template
+    id: can_frame_rate
+    name: CAN frame rate
+    unit_of_measurement: frames/s
+    accuracy_decimals: 1
+    state_class: measurement
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      static uint32_t last = 0;
+      const uint32_t now = id(can_frames_rx);
+      const float rate = (now - last) / 30.0f;
+      last = now;
+      return rate;
+
+binary_sensor:
+  - platform: template
+    name: CAN bus receiving
+    device_class: connectivity
+    entity_category: diagnostic
+    lambda: return id(can_frame_rate).state > 0;
+
+text_sensor:
+  # Last WARN/ERROR from the toptronic component (fed by logger.on_message in board.yaml).
+  - platform: template
+    id: toptronic_last_warning
+    name: TopTronic last warning
+    icon: mdi:alert-outline
+    entity_category: diagnostic

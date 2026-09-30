@@ -1,0 +1,25 @@
+# Discovery firmware: polls EVERY datapoint of the device type's preset
+# (~250 for FW) and exposes them as entities, to find the datapoints for the
+# signal map in heat-exchanger-logger.yaml. Commissioning only:
+#   make upload CONFIG=heat-exchanger-logger-discovery.yaml
+# then flash the production firmware again (make upload).
+#
+# ⚠ Presets include WRITABLE entities (setpoints, operating modes). Changing them
+#   in HA writes to the Hoval controller.
+# Same device name as production, so OTA flashing between the two works.
+# The logger signals (heat_exchanger package) are not included: they would
+# poll the same datapoints as the presets.
+
+substitutions:
+  name: heat-exchanger-logger
+  friendly_name: Heat Exchanger Logger
+  can_tx_pin: GPIO22
+  can_rx_pin: GPIO21
+  hoval_device_type: FW       # keep in sync with heat-exchanger-logger.yaml
+  hoval_device_addr: "1"
+  hoval_language: en
+  hoval_presets: "true"
+
+packages:
+  board: !include packages/board.yaml
+  canbus: !include packages/canbus.yaml

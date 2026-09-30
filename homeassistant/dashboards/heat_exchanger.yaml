@@ -1,0 +1,155 @@
+# Lovelace dashboard (YAML mode) for the heat exchanger logger: live values,
+# condition KPIs and diagnostics. The energy story (kWh per day/week/month/year)
+# lives in HA's built-in Energy panel, see homeassistant/README.md.
+# Register it in configuration.yaml (see homeassistant/README.md):
+#   lovelace:
+#     dashboards:
+#       heat-exchanger:
+#         mode: yaml
+#         title: Heat exchanger
+#         icon: mdi:heat-wave
+#         show_in_sidebar: true
+#         filename: dashboards/heat_exchanger.yaml
+
+title: Heat exchanger
+views:
+  - title: Overview
+    path: overview
+    icon: mdi:heat-wave
+    cards:
+      - type: glance
+        title: Now
+        columns: 4
+        entities:
+          - entity: sensor.heat_exchanger_logger_heat_power
+            name: Power
+          - entity: sensor.heat_exchanger_logger_primary_flow
+            name: Flow
+          - entity: sensor.heat_exchanger_effectiveness
+            name: Effectiveness
+          - entity: binary_sensor.heat_exchanger_active
+            name: Active
+
+      # Energy per day/week/month/year: HA's built-in Energy panel (sidebar "Energy").
+      - type: entities
+        title: Heat energy
+        entities:
+          - entity: sensor.heat_exchanger_energy_daily
+            name: Today
+          - entity: sensor.heat_exchanger_logger_heat_energy
+            name: Meter total
+          - entity: sensor.heat_exchanger_operating_time_today
+            name: Operating time today
+
+      - type: entities
+        title: Temperatures
+        entities:
+          - entity: sensor.heat_exchanger_logger_primary_inlet_temperature
+            name: Primary in
+          - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
+            name: Primary out
+          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
+            name: Secondary in
+          - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
+            name: Secondary out
+          - type: divider
+          - entity: sensor.heat_exchanger_logger_primary_temperature_drop
+            name: Primary ΔT
+          - entity: sensor.heat_exchanger_logger_secondary_temperature_rise
+            name: Secondary ΔT
+          - entity: sensor.heat_exchanger_lmtd
+            name: LMTD
+
+      - type: history-graph
+        title: Temperatures (24 h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.heat_exchanger_logger_primary_inlet_temperature
+            name: Primary in
+          - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
+            name: Primary out
+          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
+            name: Secondary in
+          - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
+            name: Secondary out
+
+      - type: history-graph
+        title: Heat power (24 h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.heat_exchanger_logger_heat_power
+            name: Power
+          - entity: sensor.heat_exchanger_power_24h_mean
+            name: 24 h mean
+
+  - title: Condition
+    path: condition
+    icon: mdi:wrench-clock
+    cards:
+      - type: entities
+        title: Performance
+        entities:
+          - entity: sensor.heat_exchanger_ua
+            name: UA (now)
+          - entity: sensor.heat_exchanger_ua_24h_mean
+            name: UA 24 h mean
+          - entity: input_number.heat_exchanger_ua_reference
+            name: UA reference (clean)
+          - entity: sensor.heat_exchanger_ua_relative
+            name: UA relative
+          - entity: input_number.heat_exchanger_active_threshold
+            name: Active threshold
+
+      - type: statistics-graph
+        title: UA trend, daily mean (fouling indicator)
+        chart_type: line
+        period: day
+        days_to_show: 180
+        stat_types: [mean]
+        entities:
+          - entity: sensor.heat_exchanger_ua
+            name: UA
+
+      - type: statistics-graph
+        title: Effectiveness, daily mean
+        chart_type: line
+        period: day
+        days_to_show: 180
+        stat_types: [mean]
+        entities:
+          - entity: sensor.heat_exchanger_effectiveness
+            name: Effectiveness
+
+  - title: Diagnostics
+    path: diagnostics
+    icon: mdi:stethoscope
+    cards:
+      - type: entities
+        title: Logger
+        entities:
+          - entity: binary_sensor.heat_exchanger_logger_can_bus_receiving
+            name: CAN bus receiving
+          - entity: sensor.heat_exchanger_logger_can_frame_rate
+            name: CAN frame rate
+          - entity: binary_sensor.heat_exchanger_logger_heat_exchanger_signal_missing
+            name: Signal missing
+          - entity: sensor.heat_exchanger_logger_heat_meter_status
+            name: Heat meter status (M-bus)
+          - entity: sensor.heat_exchanger_logger_toptronic_last_warning
+            name: TopTronic last warning
+          - entity: switch.heat_exchanger_logger_can_candump_debug
+            name: Candump debug (120 s)
+          - entity: switch.heat_exchanger_logger_can_find_device_debug
+            name: Find device debug (120 s)
+          - type: divider
+          - entity: sensor.heat_exchanger_logger_wifi_signal
+          - entity: sensor.heat_exchanger_logger_uptime
+          - entity: sensor.heat_exchanger_logger_firmware_version
+          - entity: sensor.heat_exchanger_logger_ip_address
+          - entity: button.heat_exchanger_logger_restart
+
+      - type: history-graph
+        title: CAN frame rate (24 h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.heat_exchanger_logger_can_frame_rate

@@ -1,0 +1,83 @@
+From 258b6fe08c2a631aaa7d816c18f617760a80f959 Mon Sep 17 00:00:00 2001
+From: fahmi-schaad <f.m.schaad@gmail.com>
+Date: Wed, 30 Sep 2026 20:00:04 +0200
+Subject: [PATCH] toptronic: optional presets, configure_hub after
+ YAML-declared entities
+
+- New hub option 'presets' (default true). With 'presets: false' no preset
+  entities are generated and no preset directory is required; only entities
+  declared in the YAML with 'platform: toptronic' are polled.
+- Emit configure_hub() from a LATE codegen job. It was emitted inside the hub's
+  to_code, before 'platform: toptronic' entities declared in the YAML called
+  add_sensor()/add_input(), so those entities were never polled.
+---
+ __init__.py | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/__init__.py b/__init__.py
+index a881842..03ee390 100644
+--- a/__init__.py
++++ b/__init__.py
+@@ -14,6 +14,7 @@ from esphome.const import (
+     CONF_SUBSTITUTIONS,
+ )
+ from esphome.core import CORE, ID
++from esphome.coroutine import CoroPriority, coroutine_with_priority
+ from esphome.cpp_types import Component
+ from esphome import yaml_util
+ 
+@@ -43,6 +44,7 @@ CONF_MAX_REFRESH_RETRIES = "max_refresh_retries"
+ CONF_REFRESH_RETRY_INTERVAL_MS = "refresh_retry_interval_ms"
+ CONF_WRITE_MIN_INTERVAL = "write_min_interval"
+ CONF_REJECT_WRITES_BEFORE_READ = "reject_writes_before_read"
++CONF_PRESETS = "presets"
+ 
+ LANGS = ("de", "en", "fr", "it")
+ 
+@@ -185,6 +187,9 @@ def _sanitize_entity_name(name: str) -> str:
+ 
+ 
+ def _validate_preset(config):
++    if not config[CONF_PRESETS]:
++        # Only explicitly configured entities: no preset directory needed.
++        return config
+     device_type = config["device_type"]
+     if device_type not in _device_types:
+         raise cv.Invalid(
+@@ -304,6 +309,9 @@ CONFIG_SCHEMA = cv.All(
+             cv.Optional(
+                 CONF_REJECT_WRITES_BEFORE_READ, default=True
+             ): cv.boolean,
++            # false: generate no preset entities; only `platform: toptronic`
++            # entities defined in the YAML are polled (small, read-only setups).
++            cv.Optional(CONF_PRESETS, default=True): cv.boolean,
+         }
+     ).extend(cv.COMPONENT_SCHEMA),
+     _validate_preset,
+@@ -471,7 +479,8 @@ async def to_code(config):
+     cg.add(var.set_write_min_interval(config[CONF_WRITE_MIN_INTERVAL]))
+     cg.add(var.set_reject_writes_before_read(config[CONF_REJECT_WRITES_BEFORE_READ]))
+ 
+-    await _generate_entities(var, config)
++    if config[CONF_PRESETS]:
++        await _generate_entities(var, config)
+ 
+     await _generate_refresh_button(var)
+ 
+@@ -480,4 +489,13 @@ async def to_code(config):
+     # computed from CORE.component_ids before preset entities are registered, so
+     # a hub can be silently dropped from components_ and setup() never runs.
+     # Config-phase statements always run for every hub.
++    # Emitted from a LATE job so that entities declared in the YAML
++    # (`sensor: - platform: toptronic`, ...) have been add_sensor()/add_input()-ed
++    # first. Emitting it here directly ran configure_hub() before those platform
++    # entities were registered, so they were never polled.
++    CORE.add_job(_configure_hub_late, var)
++
++
++@coroutine_with_priority(CoroPriority.LATE)
++async def _configure_hub_late(var):
+     cg.add(var.configure_hub())
+-- 
+2.43.0
+
