@@ -1,0 +1,215 @@
+# Further values of the Hoval TopTronic E FW controller that exist on THIS
+# installation. Found on the real system on 2026-10-21 (candump of the Hoval
+# gateway's scan + probe of datapoints 0-20 in groups 0, 1, 2, 10): only the
+# datapoints below answer with real values. The heat exchanger signals
+# (VF, RLF, ...) are in heat_exchanger.yaml (signal map).
+#
+# Terminal  Datapoint  Meaning
+# AF        0,0,0      outdoor temperature
+# VF1       1,1,2      mixed heating circuit 1 supply (controller numbering: circuit (2))
+# SF1       2,0,4      hot water storage tank
+# YFW       0,0,110    district heating valve position
+# MK1/YK1   1,1,1020/1021  heating circuit pump / mixer
+# SLP1      2,0,1066   hot water charging pump
+# SF2 is wired but not found (2,0,5 and 2,1,4 read 0.0, 2,0,6 "not connected").
+
+sensor:
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Outdoor temperature
+    function_group: 0
+    function_number: 0
+    datapoint: 0
+    type: S16
+    update_interval: ${poll_interval}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    name: District heating valve
+    function_group: 0
+    function_number: 0
+    datapoint: 110
+    type: U8
+    update_interval: ${poll_interval}
+    unit_of_measurement: "%"
+    icon: mdi:valve
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - lambda: "return x > 100 ? NAN : x;"
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Heating circuit supply temperature
+    function_group: 1
+    function_number: 1
+    datapoint: 2
+    type: S16
+    update_interval: ${poll_interval}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Heating circuit supply setpoint
+    function_group: 1
+    function_number: 1
+    datapoint: 1002
+    type: S16
+    update_interval: ${poll_interval}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Heating circuit mixer
+    function_group: 1
+    function_number: 1
+    datapoint: 1021
+    type: U8
+    update_interval: ${poll_interval}
+    unit_of_measurement: "%"
+    icon: mdi:valve
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      # 254 (0xFE) = no value (mixer idle): unknown.
+      - lambda: "return x > 100 ? NAN : x;"
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Hot water temperature
+    function_group: 2
+    function_number: 0
+    datapoint: 4
+    type: S16
+    update_interval: ${poll_interval}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Hot water setpoint
+    function_group: 2
+    function_number: 0
+    datapoint: 1004
+    type: S16
+    update_interval: ${poll_interval}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - timeout: ${signal_timeout}
+
+  # On/off states (U8 0/1), shown as binary sensors below.
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hv_hc_pump
+    internal: true
+    function_group: 1
+    function_number: 1
+    datapoint: 1020
+    type: U8
+    update_interval: ${poll_interval}
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hv_dhw_pump
+    internal: true
+    function_group: 2
+    function_number: 0
+    datapoint: 1066
+    type: U8
+    update_interval: ${poll_interval}
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hv_return_limit
+    internal: true
+    function_group: 0
+    function_number: 0
+    datapoint: 98
+    type: U8
+    update_interval: ${poll_interval}
+  - platform: toptronic
+    toptronic_id: hoval
+    id: hv_power_limit
+    internal: true
+    function_group: 0
+    function_number: 0
+    datapoint: 99
+    type: U8
+    update_interval: ${poll_interval}
+
+binary_sensor:
+  - platform: template
+    name: Heating circuit pump
+    device_class: running
+    lambda: |-
+      if (isnan(id(hv_hc_pump).state)) return {};
+      return id(hv_hc_pump).state > 0;
+  - platform: template
+    name: Hot water charging pump
+    device_class: running
+    lambda: |-
+      if (isnan(id(hv_dhw_pump).state)) return {};
+      return id(hv_dhw_pump).state > 0;
+  - platform: template
+    name: Return temperature limitation
+    icon: mdi:thermometer-chevron-down
+    lambda: |-
+      if (isnan(id(hv_return_limit).state)) return {};
+      return id(hv_return_limit).state > 0;
+  - platform: template
+    name: Power limitation
+    icon: mdi:flash-alert
+    lambda: |-
+      if (isnan(id(hv_power_limit).state)) return {};
+      return id(hv_power_limit).state > 0;
+
+text_sensor:
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Heating circuit status
+    function_group: 1
+    function_number: 1
+    datapoint: 2051
+    update_interval: ${poll_interval}
+    options: ['Off', 'Heating normal', 'Heating comfort', 'Heating eco', 'Frost protection', 'Holiday', 'Party',
+              'Cooling normal', 'Cooling comfort', 'Cooling eco', 'FAULT', 'Manual mode', 'Protection cooling',
+              'Cooling external/constant', 'Heating external/constant', 'SmartGrid priority']
+    values: [0, 1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 22, 23, 26]
+  - platform: toptronic
+    toptronic_id: hoval
+    name: Hot water status
+    function_group: 2
+    function_number: 0
+    datapoint: 2052
+    update_interval: ${poll_interval}
+    options: ['Off', 'Charging normal', 'Charging comfort', 'FAULT', 'Draw-off', 'Charging reduced',
+              'SmartGrid priority', 'SmartGrid forced']
+    values: [0, 1, 2, 5, 6, 8, 12, 13]

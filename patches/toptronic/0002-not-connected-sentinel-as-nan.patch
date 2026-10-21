@@ -1,0 +1,41 @@
+From: fahmi-schaad <f.m.schaad@gmail.com>
+Date: Wed, 21 Oct 2026 22:30:00 +0200
+Subject: [PATCH] toptronic: publish "sensor not connected" as NAN
+
+TopTronic answers the minimum of a signed type (S16 0x8000) for a sensor
+that is not connected. It was published as -3276.8 after scaling; publish
+NAN instead so Home Assistant shows "unknown".
+---
+diff --git a/toptronic.cpp b/toptronic.cpp
+index b593dd3..83b3b12 100644
+--- a/toptronic.cpp
++++ b/toptronic.cpp
+@@ -407,7 +407,27 @@ std::vector<uint8_t> float_to_bytes(float value, TypeName type) {
+ }
+ 
+ #ifdef USE_SENSOR
+-float TopTronicSensor::parse_value(const uint8_t *data, size_t len) { return bytes_to_float(data, len, this->type_); }
++float TopTronicSensor::parse_value(const uint8_t *data, size_t len) {
++  // TopTronic answers the minimum of a signed type (S16 0x8000 -> -3276.8 after
++  // scaling) for a sensor that is not connected. Publish NAN ("unknown").
++  switch (this->type_) {
++    case S8:
++      if (bytes_to_number<int8_t>(data, len) == INT8_MIN)
++        return NAN;
++      break;
++    case S16:
++      if (bytes_to_number<int16_t>(data, len) == INT16_MIN)
++        return NAN;
++      break;
++    case S32:
++      if (bytes_to_number<int32_t>(data, len) == INT32_MIN)
++        return NAN;
++      break;
++    default:
++      break;
++  }
++  return bytes_to_float(data, len, this->type_);
++}
+ // Minimum value bytes a complete RESPONSE for this sensor must carry.
+ size_t TopTronicSensor::value_width() const { return type_width(this->type_); }
+ #endif

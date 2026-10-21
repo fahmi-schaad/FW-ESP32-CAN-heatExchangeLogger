@@ -34,7 +34,7 @@ views:
       - type: entities
         title: Heat energy
         entities:
-          - entity: sensor.heat_exchanger_energy_daily
+          - entity: sensor.heat_exchanger_energy_today
             name: Today
           - entity: sensor.heat_exchanger_logger_heat_energy
             name: Meter total
@@ -59,6 +59,54 @@ views:
             name: Secondary ΔT
           - entity: sensor.heat_exchanger_lmtd
             name: LMTD
+
+      # Further TopTronic values that exist on this installation (esphome/packages/hoval_plant.yaml).
+      - type: entities
+        title: Plant (TopTronic)
+        entities:
+          - entity: sensor.infrastruktur_heat_exchanger_logger_outdoor_temperature
+            name: Outdoor (AF)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_district_heating_valve
+            name: District heating valve (YFW)
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_return_temperature_limitation
+            name: Return limitation
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_power_limitation
+            name: Power limitation
+          - type: divider
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_status
+            name: Heating circuit
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_temperature
+            name: Supply (VF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_setpoint
+            name: Supply setpoint
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_heating_circuit_pump
+            name: Pump (MK1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_mixer
+            name: Mixer (YK1)
+          - type: divider
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_status
+            name: Hot water
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_temperature
+            name: Hot water (SF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_setpoint
+            name: Hot water setpoint
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_hot_water_charging_pump
+            name: Charging pump (SLP1)
+
+      - type: history-graph
+        title: Plant temperatures (24 h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
+            name: Station supply (VF)
+          - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
+            name: Primary return (RLF)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_temperature
+            name: Heating circuit (VF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_temperature
+            name: Hot water (SF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_outdoor_temperature
+            name: Outdoor (AF)
 
       - type: history-graph
         title: Temperatures (24 h)

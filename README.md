@@ -30,7 +30,7 @@ Hoval TopTronic E ──CAN 50k──> ESP32 (ESPHome)                          
 | [docs/](docs/) | [Schematic.pdf](docs/Schematic.pdf), [hardware.md](docs/hardware.md) (pinout, **power supply review items**), [hoval-toptronic.md](docs/hoval-toptronic.md) (protocol, commissioning, signal map) |
 
 Protocol component: `toptronic` from [nliaudat/esp_canbus](https://github.com/nliaudat/esp_canbus)
-(Apache-2.0), vendored at a pinned commit with one local patch (read-only mode + a polling fix,
+(Apache-2.0), vendored at a pinned commit with three local patches (read-only mode + a polling fix, "not connected" as unknown, own gateway node id,
 see [docs/hoval-toptronic.md](docs/hoval-toptronic.md)).
 
 ## Build chain
@@ -86,7 +86,7 @@ to a GitHub release.
   integrating flow × ΔT. Energy is exposed in kWh as `total_increasing`, so it works with the HA
   Energy dashboard. Zero and decreasing readings are filtered so glitches can't be counted as
   meter resets.
-- **Missing data is shown as missing:** a signal not refreshed for 150 s becomes `unknown`.
+- **Missing data is shown as missing:** a signal not refreshed for 300 s becomes `unknown`.
 - **Security:** API and OTA are encrypted with the same random key. The web server has no
   firmware upload. Fallback AP with password.
 

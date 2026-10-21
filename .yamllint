@@ -1,0 +1,21 @@
+extends: default
+
+ignore: |
+  .venv/
+  esphome/.esphome/
+  esphome/components/
+  build/
+
+rules:
+  colons:
+    max-spaces-after: -1   # allow the aligned signal-map table
+  line-length:
+    max: 140
+  document-start: disable
+  truthy:
+    allowed-values: ["true", "false", "on", "off"]
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  indentation:
+    indent-sequences: consistent

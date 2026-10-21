@@ -17,19 +17,24 @@ substitutions:
   # ---- Board pins (from docs/Schematic.pdf, sheets "Esp devkit" / "CanBus") ----
   can_tx_pin: GPIO22
   can_rx_pin: GPIO21
+  # NORMAL: send our own GET requests. LISTENONLY: send nothing, only decode what
+  # the installed Hoval gateway asks for (~40 datapoints, no heat meter).
+  can_mode: NORMAL
 
   # ---- Hoval device on the bus ---------------------------------------------------
   # FW = district heating (heat exchanger station), WEZ = heat generator,
   # HK = heating circuit, MWA = energy meter module, ... (docs/hoval-toptronic.md)
-  # TODO(hardware): confirm type and address on the TopTronic control panel.
+  # Confirmed 2026-10-21: controller label "2-TopTronic E - FW", address 1 answers.
   hoval_device_type: FW
   hoval_device_addr: "1"
+  # Our sender node id on the bus. NOT 0x481: that is the installed Hoval gateway.
+  hoval_gateway_node_id: "0x48A"
   hoval_language: en
   hoval_presets: "false"
 
   # ---- Timing --------------------------------------------------------------------
-  poll_interval: 30s          # GET request per signal
-  signal_timeout: 150s        # no answer for this long -> "unknown" in HA
+  poll_interval: 30s          # GET request per signal (NORMAL mode only; LISTENONLY sends nothing)
+  signal_timeout: 300s        # no answer for this long -> "unknown" in HA (Hoval gateway polls every 1-2 min)
 
   # ---- Signal map ------------------------------------------------------------------
   # TopTronic datapoint for each logger signal: function group, function number,
@@ -37,17 +42,22 @@ substitutions:
   # Defaults: district heating (FW) heat meter (2) = function group 20, number 1.
   # Datapoint IDs: presets or the discovery firmware (docs/hoval-toptronic.md).
   # Unmapped signal: poll: never (the datapoint is then never requested).
-  # TODO(hardware): verify every entry against the TopTronic display.
-  heat_energy:  {group: 20, number: 1, datapoint: 0, type: U32, scale: 1.0, poll: "${poll_interval}"}      # kWh
-  heat_power:   {group: 20, number: 1, datapoint: 1, type: U32, scale: 0.1, poll: "${poll_interval}"}      # kW
-  flow_prim:    {group: 20, number: 1, datapoint: 2, type: U32, scale: 0.001, poll: "${poll_interval}"}    # m³/h (unit TBC)
-  meter_status: {group: 20, number: 1, datapoint: 8, type: U8, scale: 1.0, poll: "${poll_interval}"}       # M-bus status byte
-  t_prim_in:    {group: 20, number: 1, datapoint: 4, type: S16, scale: 0.1, poll: "${poll_interval}"}      # °C, meter flow temp.
-  t_prim_out:   {group: 20, number: 1, datapoint: 5, type: S16, scale: 0.1, poll: "${poll_interval}"}      # °C, meter return temp.
-  t_sec_out:    {group: 0, number: 0, datapoint: 21059, type: S16, scale: 0.1, poll: "${poll_interval}"}   # °C, plant flow sensor
-  t_sec_in:     {group: 255, number: 255, datapoint: 65535, type: S16, scale: 0.1, poll: never}            # °C, not mapped yet
+  # Checked on the real system 2026-10-21: the heat meter (group 20, all 16 meters)
+  # answers only zeros (no M-Bus data), so its signals are unmapped until it reports.
+  # Unmapped = 255,255,65535 + poll: never. (poll: never alone still reads once at
+  # boot and would publish the meter's 0.) Meter (2) datapoint in each comment.
+  heat_energy:  {group: 255, number: 255, datapoint: 65535, type: U32, scale: 1.0, poll: never}      # 20,1,0: kWh
+  heat_power:   {group: 255, number: 255, datapoint: 65535, type: U32, scale: 0.1, poll: never}      # 20,1,1: kW
+  flow_prim:    {group: 255, number: 255, datapoint: 65535, type: U32, scale: 0.001, poll: never}    # 20,1,2: m³/h (unit TBC)
+  meter_status: {group: 255, number: 255, datapoint: 65535, type: U8, scale: 1.0, poll: never}       # 20,1,8: M-bus status byte
+  # 20,1,4: °C, meter flow temp. (no other sensor)
+  t_prim_in:    {group: 255, number: 255, datapoint: 65535, type: S16, scale: 0.1, poll: never}
+  t_prim_out:   {group: 1, number: 0, datapoint: 3, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, RLF (return limitation sensor)
+  t_sec_out:    {group: 1, number: 0, datapoint: 2, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, VF (station supply)
+  t_sec_in:     {group: 255, number: 255, datapoint: 65535, type: S16, scale: 0.1, poll: never}      # °C, no sensor on this installation
 
 packages:
   board: !include packages/board.yaml
   canbus: !include packages/canbus.yaml
   heat_exchanger: !include packages/heat_exchanger.yaml
+  hoval_plant: !include packages/hoval_plant.yaml

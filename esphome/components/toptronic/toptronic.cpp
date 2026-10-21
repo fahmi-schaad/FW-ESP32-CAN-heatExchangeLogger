@@ -274,6 +274,12 @@ static constexpr uint16_t GATEWAY_DEVICE_TYPE = 1153;  // GW
 //   bits 28-22 : fixed 0x7F priority/type marker
 //   bits 21-11 : sender node ID
 //   bits 10-0  : receiver node ID (or broadcast mask)
+uint16_t TopTronic::sender_node_id_() const {
+  if (this->gateway_node_id_ != 0)
+    return this->gateway_node_id_;
+  return GATEWAY_DEVICE_TYPE | this->device_addr_;
+}
+
 uint32_t build_can_id(uint16_t sender_id, uint16_t receiver_mask) {
   return (0x7F << 22) | (sender_id << 11) | receiver_mask;
 }
@@ -407,7 +413,27 @@ std::vector<uint8_t> float_to_bytes(float value, TypeName type) {
 }
 
 #ifdef USE_SENSOR
-float TopTronicSensor::parse_value(const uint8_t *data, size_t len) { return bytes_to_float(data, len, this->type_); }
+float TopTronicSensor::parse_value(const uint8_t *data, size_t len) {
+  // TopTronic answers the minimum of a signed type (S16 0x8000 -> -3276.8 after
+  // scaling) for a sensor that is not connected. Publish NAN ("unknown").
+  switch (this->type_) {
+    case S8:
+      if (bytes_to_number<int8_t>(data, len) == INT8_MIN)
+        return NAN;
+      break;
+    case S16:
+      if (bytes_to_number<int16_t>(data, len) == INT16_MIN)
+        return NAN;
+      break;
+    case S32:
+      if (bytes_to_number<int32_t>(data, len) == INT32_MIN)
+        return NAN;
+      break;
+    default:
+      break;
+  }
+  return bytes_to_float(data, len, this->type_);
+}
 // Minimum value bytes a complete RESPONSE for this sensor must carry.
 size_t TopTronicSensor::value_width() const { return type_width(this->type_); }
 #endif
@@ -498,7 +524,7 @@ void TopTronic::register_sensor_callbacks() {
       auto *sensor = s.second;
       sensor->cache_request_data();  // build once, avoid per-poll heap alloc
       auto *canbus = this->canbus_;
-      uint32_t can_id = build_can_id(GATEWAY_DEVICE_TYPE | this->device_addr_, this->get_device_id());
+      uint32_t can_id = build_can_id(this->sender_node_id_(), this->get_device_id());
 
       // Capture the receiver device id (e.g. 0x208 for HV+8, 0x408 for BM+8) so the
       // [GET] log shows exactly which bus device is being polled.
@@ -639,7 +665,7 @@ void TopTronic::register_input_callbacks() {
     for (const auto &i : device->get_inputs()) {
       auto *input = i.second;
       auto *canbus = this->canbus_;
-      uint32_t can_id = build_can_id(GATEWAY_DEVICE_TYPE | this->device_addr_, device_id);
+      uint32_t can_id = build_can_id(this->sender_node_id_(), device_id);
 
       input->add_on_set_callback([this, canbus, can_id, device_id, input](const std::vector<uint8_t> &data) -> void {
         const uint32_t id = input->get_id();
@@ -1116,6 +1142,7 @@ void TopTronic::dump_config() {
   }
   ESP_LOGCONFIG(TAG, "TopTronic:");
   ESP_LOGCONFIG(TAG, "  Device type: 0x%04X, device address: 0x%02X", this->device_type_, this->device_addr_);
+  ESP_LOGCONFIG(TAG, "  Gateway sender node id: 0x%03X", (unsigned) this->sender_node_id_());
   ESP_LOGCONFIG(TAG, "  Devices: %u, sensors: %u, inputs: %u", (unsigned) this->devices_.size(),
                 (unsigned) sensor_count, (unsigned) input_count);
   ESP_LOGCONFIG(TAG, "  Boot refresh delay: %u ms", (unsigned) this->boot_refresh_delay_ms_);

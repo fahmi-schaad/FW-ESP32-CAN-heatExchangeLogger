@@ -12,8 +12,9 @@ canbus:
     tx_pin: ${can_tx_pin}
     rx_pin: ${can_rx_pin}
     bit_rate: 50KBPS            # Hoval TopTronic E bus speed
-    # NORMAL, not LISTENONLY: the logger is an active GW node that sends GET requests.
-    mode: NORMAL
+    # NORMAL: the logger is an active GW node that sends GET requests.
+    # LISTENONLY: sends nothing (no requests, no ACKs), only for passive bus analysis.
+    mode: ${can_mode}
     rx_queue_len: 128           # absorbs bursts of multi-frame responses
     use_extended_id: true
     can_id: 0                   # unused, the toptronic component builds its own IDs
@@ -30,6 +31,9 @@ toptronic:
     canbus_id: cbus
     device_type: ${hoval_device_type}
     device_addr: ${hoval_device_addr}
+    # Our own sender node id. The installed Hoval gateway already sends as 0x481
+    # (GW | address 1), the component's default for device_addr 1.
+    gateway_node_id: ${hoval_gateway_node_id}
     language: ${hoval_language}
     # false (production): poll only the signal map's datapoints, read-only.
     # true (discovery firmware): generate all preset entities of the device type.

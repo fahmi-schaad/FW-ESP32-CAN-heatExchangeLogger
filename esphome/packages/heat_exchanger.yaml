@@ -178,7 +178,8 @@ binary_sensor:
     name: Heat exchanger signal missing
     device_class: problem
     entity_category: diagnostic
-    # ON (= problem) when a core heat meter signal is missing.
+    # ON (= problem) when a core signal is missing: the two temperatures this
+    # installation actually has (RLF = primary outlet, VF = secondary outlet).
+    # The heat meter signals are unmapped here (no M-Bus data), so they can't count.
     lambda: |-
-      return std::isnan(id(hx_power).state) || std::isnan(id(hx_t_prim_in).state) ||
-             std::isnan(id(hx_t_prim_out).state);
+      return std::isnan(id(hx_t_prim_out).state) || std::isnan(id(hx_t_sec_out).state);
