@@ -109,19 +109,6 @@ views:
             name: Outdoor (AF)
 
       - type: history-graph
-        title: Temperatures (24 h)
-        hours_to_show: 24
-        entities:
-          - entity: sensor.heat_exchanger_logger_primary_inlet_temperature
-            name: Primary in
-          - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
-            name: Primary out
-          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
-            name: Secondary in
-          - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
-            name: Secondary out
-
-      - type: history-graph
         title: Heat power (24 h)
         hours_to_show: 24
         entities:
