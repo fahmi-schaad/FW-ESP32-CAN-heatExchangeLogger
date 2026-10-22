@@ -47,11 +47,11 @@ views:
           - entity: sensor.heat_exchanger_logger_primary_inlet_temperature
             name: Primary in
           - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
-            name: Primary out
+            name: Primary out (RLF)
           - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
             name: Secondary in
           - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
-            name: Secondary out
+            name: Secondary out (VF)
           - type: divider
           - entity: sensor.heat_exchanger_logger_primary_temperature_drop
             name: Primary ΔT
@@ -76,7 +76,7 @@ views:
           - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_status
             name: Heating circuit
           - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_temperature
-            name: Supply (VF1)
+            name: Heating circuit supply (VF1)
           - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_setpoint
             name: Supply setpoint
           - entity: binary_sensor.infrastruktur_heat_exchanger_logger_heating_circuit_pump
@@ -98,11 +98,11 @@ views:
         hours_to_show: 24
         entities:
           - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
-            name: Station supply (VF)
+            name: Secondary out (VF)
           - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
-            name: Primary return (RLF)
+            name: Primary out (RLF)
           - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_temperature
-            name: Heating circuit (VF1)
+            name: Heating circuit supply (VF1)
           - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_temperature
             name: Hot water (SF1)
           - entity: sensor.infrastruktur_heat_exchanger_logger_outdoor_temperature
@@ -125,25 +125,25 @@ views:
         title: Performance
         entities:
           - entity: sensor.heat_exchanger_ua
-            name: UA (now)
+            name: Heat transfer capacity (now)
           - entity: sensor.heat_exchanger_ua_24h_mean
-            name: UA 24 h mean
+            name: Heat transfer capacity 24 h mean
           - entity: input_number.heat_exchanger_ua_reference
-            name: UA reference (clean)
+            name: Heat transfer capacity reference (clean)
           - entity: sensor.heat_exchanger_ua_relative
-            name: UA relative
+            name: Heat transfer capacity relative
           - entity: input_number.heat_exchanger_active_threshold
             name: Active threshold
 
       - type: statistics-graph
-        title: UA trend, daily mean (fouling indicator)
+        title: Heat transfer capacity, daily mean (fouling indicator)
         chart_type: line
         period: day
         days_to_show: 180
         stat_types: [mean]
         entities:
           - entity: sensor.heat_exchanger_ua
-            name: UA
+            name: Heat transfer capacity
 
       - type: statistics-graph
         title: Effectiveness, daily mean

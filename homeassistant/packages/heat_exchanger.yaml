@@ -12,6 +12,21 @@
 # temperature differences in the LMTD template (marked below).
 
 # ---------------------------------------------------------------------------
+# Display names. "UA" (= P / LMTD) is shown as "heat transfer capacity". Set here
+# so the entity IDs (sensor.heat_exchanger_ua...) stay stable on every install.
+# ---------------------------------------------------------------------------
+homeassistant:
+  customize:
+    sensor.heat_exchanger_ua:
+      friendly_name: Heat exchanger heat transfer capacity
+    sensor.heat_exchanger_ua_24h_mean:
+      friendly_name: Heat exchanger heat transfer capacity 24h mean
+    sensor.heat_exchanger_ua_relative:
+      friendly_name: Heat exchanger heat transfer capacity relative
+    input_number.heat_exchanger_ua_reference:
+      friendly_name: Heat exchanger heat transfer capacity reference (clean)
+
+# ---------------------------------------------------------------------------
 # Settings adjustable from the UI
 # ---------------------------------------------------------------------------
 input_number:
@@ -233,5 +248,5 @@ automation:
           notification_id: heat_exchanger_fouling
           title: Heat exchanger performance
           message: >
-            UA is at {{ states('sensor.heat_exchanger_ua_relative') }} % of the clean
+            The heat transfer capacity is at {{ states('sensor.heat_exchanger_ua_relative') }} % of the clean
             reference for more than a day. The heat exchanger may need cleaning.
