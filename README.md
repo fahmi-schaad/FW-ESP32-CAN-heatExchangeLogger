@@ -92,9 +92,9 @@ to a GitHub release.
 
 ## Open points (need the real installation)
 
-- [ ] Hoval device type and address (`FW`/1 assumed)
-- [ ] Heat meter index and flow-rate unit (meter (2), `FW_20_1_*`, l/h assumed)
-- [ ] Secondary side temperatures (supply guessed as plant flow sensor, return unknown)
+- [x] Hoval device type and address: `FW`/1 (controller label)
+- [x] Primary and secondary temperatures: 0,0,101..105 (HovalConnect station overview)
+- [ ] Heat meter: reports no data (M-Bus meter not connected?), energy/power/flow unmapped
 - [ ] Heat exchanger type (counterflow assumed for LMTD)
 - [ ] Meaning of the M-bus status byte values
 - [ ] Power supply review items in [docs/hardware.md](docs/hardware.md)

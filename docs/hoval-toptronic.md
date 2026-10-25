@@ -68,10 +68,17 @@ Both use the same device name, so you can OTA-flash between them:
 
    | Signal | This installation (checked 2026-10-21) | Notes |
    |---|---|---|
-   | `t_sec_out` | 1,0,2 S16 ×0.1 → °C | **VF**, station supply ("Supply actual (1)") |
-   | `t_prim_out` | 1,0,3 S16 ×0.1 → °C | **RLF**, return limitation sensor ("Return actual (1)", not in the FW preset) |
-   | `heat_energy`, `heat_power`, `flow_prim`, `meter_status`, `t_prim_in` | unmapped | heat meter (group 20, all 16 meters) answers only zeros: no M-Bus data. Meter (2) = 20,1,0/1/2/8/4 once it reports |
-   | `t_sec_in` | unmapped | no secondary return sensor on this installation |
+   | `t_prim_in` | 0,0,105 S16 ×0.1 → °C | primary supply ("Vorlauftemperatur primär") |
+   | `t_prim_out` | 0,0,101 S16 ×0.1 → °C | primary return ("Rücklauftemperatur primär") |
+   | `t_sec_out` | 0,0,103 S16 ×0.1 → °C | secondary supply ("Vorlauftemperatur sekundär"), same as VF 1,0,2 |
+   | `t_sec_in` | 0,0,102 S16 ×0.1 → °C | secondary return ("Rücklauftemperatur sekundär"), same as RLF 1,0,3 |
+   | `heat_energy`, `heat_power`, `flow_prim`, `meter_status` | unmapped | heat meter (group 20, all 16 meters) answers only zeros: no M-Bus data. HovalConnect's "Energie Station" 0,0,111 and "Durchfluss Station" 0,0,112 (U32) are 0 too. Meter (2) = 20,1,0/1/2/8 once it reports |
+
+   The temperatures are the datapoints HovalConnect reads for its station overview
+   ("Übersicht 193.10.1" = node 0xC1, heat generator group 10/1), found on 2026-10-24 by
+   capturing its requests (it sends with CAN priority 0x05, not 0x1F). Also on that page:
+   heat generator actual 10,1,7 and status 10,1,2053 (1 = "Heizen"), in `hoval_plant.yaml`.
+   Mirrors: 0,0,207 = 0,0,105, 0,0,238 = 0,0,102, 0,0,204 ≈ 10,1,7; 0,0,205/209 not connected.
 
    Further real values (AF, YFW valve, heating circuit VF1/MK1/YK1, hot water SF1/SLP1) are in
    `esphome/packages/hoval_plant.yaml`. SF2 is wired but no datapoint was found for it
@@ -93,6 +100,12 @@ Patch `0002-not-connected-sentinel-as-nan`: a signed value at its minimum (S16 `
 "sensor not connected" and is published as NAN (HA: unknown) instead of -3276.8.
 
 Patch `0003-configurable-gateway-node-id`: hub option `gateway_node_id`, see above.
+
+Patch `0004-ignore-extended-records`: per-entity option `ignore_extended: true` (backport of
+upstream 645c674). The FW controller answers many datapoints with a 0x42 record (the value)
+followed by a 0x56 record that carries the datapoint's limit (e.g. 100.0 °C for 0,0,102,
+100 % for the valve 0,0,110). Without the option the entity flips to the limit. All
+production entities set it. Drop the patch when re-vendoring a ref that has the option.
 
 Patch `0001-optional-presets-late-configure-hub`:
 - **`presets: false` hub option.** Upstream always generates every preset entity (~290 for FW,

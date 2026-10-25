@@ -44,17 +44,21 @@ substitutions:
   # Unmapped signal: poll: never (the datapoint is then never requested).
   # Checked on the real system 2026-10-21: the heat meter (group 20, all 16 meters)
   # answers only zeros (no M-Bus data), so its signals are unmapped until it reports.
+  # HovalConnect shows "Energie Station" (0,0,111 U32) and "Durchfluss Station"
+  # (0,0,112 U32) as 0 too (2026-10-24).
   # Unmapped = 255,255,65535 + poll: never. (poll: never alone still reads once at
   # boot and would publish the meter's 0.) Meter (2) datapoint in each comment.
   heat_energy:  {group: 255, number: 255, datapoint: 65535, type: U32, scale: 1.0, poll: never}      # 20,1,0: kWh
   heat_power:   {group: 255, number: 255, datapoint: 65535, type: U32, scale: 0.1, poll: never}      # 20,1,1: kW
   flow_prim:    {group: 255, number: 255, datapoint: 65535, type: U32, scale: 0.001, poll: never}    # 20,1,2: m³/h (unit TBC)
   meter_status: {group: 255, number: 255, datapoint: 65535, type: U8, scale: 1.0, poll: never}       # 20,1,8: M-bus status byte
-  # 20,1,4: °C, meter flow temp. (no other sensor)
-  t_prim_in:    {group: 255, number: 255, datapoint: 65535, type: S16, scale: 0.1, poll: never}
-  t_prim_out:   {group: 1, number: 0, datapoint: 3, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, RLF (return limitation sensor)
-  t_sec_out:    {group: 1, number: 0, datapoint: 2, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, VF (station supply)
-  t_sec_in:     {group: 255, number: 255, datapoint: 65535, type: S16, scale: 0.1, poll: never}      # °C, no sensor on this installation
+  # Temperatures: the datapoints HovalConnect reads for its station overview
+  # ("Übersicht 193.10.1"), found by capturing its requests on 2026-10-24.
+  # 1,0,3 (RLF) reads the same as 0,0,102: the RLF sits in the SECONDARY return.
+  t_prim_in:    {group: 0, number: 0, datapoint: 105, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, primary supply
+  t_prim_out:   {group: 0, number: 0, datapoint: 101, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, primary return
+  t_sec_out:    {group: 0, number: 0, datapoint: 103, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, sec. supply (= VF 1,0,2)
+  t_sec_in:     {group: 0, number: 0, datapoint: 102, type: S16, scale: 0.1, poll: "${poll_interval}"}  # °C, sec. return (= RLF 1,0,3)
 
 packages:
   board: !include packages/board.yaml

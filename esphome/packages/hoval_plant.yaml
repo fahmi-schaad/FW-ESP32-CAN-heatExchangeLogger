@@ -9,13 +9,17 @@
 # VF1       1,1,2      mixed heating circuit 1 supply (controller numbering: circuit (2))
 # SF1       2,0,4      hot water storage tank
 # YFW       0,0,110    district heating valve position
-# MK1/YK1   1,1,1020/1021  heating circuit pump / mixer
+# MK1/YK1   1,1,1020/1021  heating circuit pump / mixer drive (S8, -100..100 %)
 # SLP1      2,0,1066   hot water charging pump
+# -         10,1,7     heat generator actual ("Wärmeerzeuger-Ist" in HovalConnect)
+# -         10,1,2053  heat generator status ("Status Wärmeerzeuger")
 # SF2 is wired but not found (2,0,5 and 2,1,4 read 0.0, 2,0,6 "not connected").
+# Group 10 (heat generator) has number 1 only; 10,0,* does not answer (2026-10-24).
 
 sensor:
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Outdoor temperature
     function_group: 0
     function_number: 0
@@ -32,6 +36,7 @@ sensor:
 
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: District heating valve
     function_group: 0
     function_number: 0
@@ -48,6 +53,24 @@ sensor:
 
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
+    name: Heat generator temperature
+    function_group: 10
+    function_number: 1
+    datapoint: 7
+    type: S16
+    update_interval: ${poll_interval}
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+      - timeout: ${signal_timeout}
+
+  - platform: toptronic
+    toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Heating circuit supply temperature
     function_group: 1
     function_number: 1
@@ -64,6 +87,7 @@ sensor:
 
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Heating circuit supply setpoint
     function_group: 1
     function_number: 1
@@ -80,23 +104,26 @@ sensor:
 
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Heating circuit mixer
     function_group: 1
     function_number: 1
     datapoint: 1021
-    type: U8
+    # Signed (as in the HK preset; the FW preset's U8 is wrong): 3-point mixer
+    # drive, + = opening, - = closing. 0xFE read on the plant = -2 % (2026-10-25).
+    type: S8
     update_interval: ${poll_interval}
     unit_of_measurement: "%"
     icon: mdi:valve
     state_class: measurement
     accuracy_decimals: 0
     filters:
-      # 254 (0xFE) = no value (mixer idle): unknown.
-      - lambda: "return x > 100 ? NAN : x;"
+      - lambda: "return (x < -100 || x > 100) ? NAN : x;"
       - timeout: ${signal_timeout}
 
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Hot water temperature
     function_group: 2
     function_number: 0
@@ -113,6 +140,7 @@ sensor:
 
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Hot water setpoint
     function_group: 2
     function_number: 0
@@ -130,6 +158,7 @@ sensor:
   # On/off states (U8 0/1), shown as binary sensors below.
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     id: hv_hc_pump
     internal: true
     function_group: 1
@@ -139,6 +168,7 @@ sensor:
     update_interval: ${poll_interval}
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     id: hv_dhw_pump
     internal: true
     function_group: 2
@@ -148,6 +178,7 @@ sensor:
     update_interval: ${poll_interval}
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     id: hv_return_limit
     internal: true
     function_group: 0
@@ -157,11 +188,23 @@ sensor:
     update_interval: ${poll_interval}
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     id: hv_power_limit
     internal: true
     function_group: 0
     function_number: 0
     datapoint: 99
+    type: U8
+    update_interval: ${poll_interval}
+  # Heat generator status code, shown as text below.
+  - platform: toptronic
+    toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
+    id: hv_generator_status
+    internal: true
+    function_group: 10
+    function_number: 1
+    datapoint: 2053
     type: U8
     update_interval: ${poll_interval}
 
@@ -192,8 +235,21 @@ binary_sensor:
       return id(hv_power_limit).state > 0;
 
 text_sensor:
+  # No Hoval enum for 10,1,2053 in the presets or docs. 1 = "Heizen" in HovalConnect
+  # (2026-10-24); other codes are shown as numbers until their meaning is known.
+  - platform: template
+    name: Heat generator status
+    icon: mdi:fire
+    update_interval: ${poll_interval}
+    lambda: |-
+      const float s = id(hv_generator_status).state;
+      if (std::isnan(s)) return {};
+      if (s == 0) return {"Off"};
+      if (s == 1) return {"Heating"};
+      return {"Code " + std::to_string((int) s)};
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Heating circuit status
     function_group: 1
     function_number: 1
@@ -205,6 +261,7 @@ text_sensor:
     values: [0, 1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 22, 23, 26]
   - platform: toptronic
     toptronic_id: hoval
+    ignore_extended: true  # 0x56 records carry limits, not values
     name: Hot water status
     function_group: 2
     function_number: 0
