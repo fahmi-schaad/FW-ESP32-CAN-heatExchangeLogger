@@ -77,6 +77,10 @@ class TopTronicBase : public PollingComponent {
   void set_function_group(uint8_t function_group) { this->function_group_ = function_group; }
   void set_function_number(uint8_t function_number) { this->function_number_ = function_number; }
   void set_datapoint(uint16_t datapoint) { this->datapoint_ = datapoint; }
+  // Use only plain 0x42 RESPONSE records; extended 0x56 records carry the
+  // datapoint's limits (descriptor), not its value, on some devices.
+  void set_ignore_extended(bool v) { this->ignore_extended_ = v; }
+  bool ignore_extended() const { return this->ignore_extended_; }
 
   // Unique entity ID: encodes function_group | function_number | datapoint into a single uint32.
   // Used as the key in the per-device sensor/input hash maps.
@@ -102,6 +106,7 @@ class TopTronicBase : public PollingComponent {
   uint8_t function_group_;
   uint8_t function_number_;
   uint16_t datapoint_;
+  bool ignore_extended_{false};
 
   // GET request bytes, built once at setup. Returned by reference to avoid copying on every poll.
   std::vector<uint8_t> request_data_;

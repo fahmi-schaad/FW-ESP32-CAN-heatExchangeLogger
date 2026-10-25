@@ -1615,6 +1615,14 @@ void TopTronic::interpret_message_(const uint8_t *data, size_t len, uint32_t can
   }
   TopTronicBase *sensor_base = sensor_it->second;
 
+  // 0x56 records look like datapoint descriptors (type/limits) rather than values, e.g.
+  //   FW 0-0-102 (return temp.): 0x42 -> 0x01B9 (44.1),  0x56 -> F0 00 | 00 00 03 E8 (100.0)
+  // Entities flagged ignore_extended only take the plain 0x42 value.
+  if (data[0] == RESPONSE_EXT && sensor_base->ignore_extended()) {
+    TT_LOGD("[SKIP] 0x56 record ignored for %s (ignore_extended)", sensor_base->get_name().c_str());
+    return;
+  }
+
   // Reject truncated responses before they can unlock write safety or publish
   // a partial/zero value: the payload must carry at least as many value bytes
   // as the sensor's configured type decodes (1 for text sensors, 1/2/4/8 for
