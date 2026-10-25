@@ -1,0 +1,124 @@
+From: fahmi-schaad <f.m.schaad@gmail.com>
+Date: Sat, 24 Oct 2026 12:00:00 +0200
+Subject: [PATCH] toptronic: ignore_extended option (backport from upstream)
+
+The FW controller answers the station temperatures (0,0,101..105) with a
+plain 0x42 record (the value) followed by an extended 0x56 record that
+carries the datapoint's limit (e.g. F0 00 | 00 00 03 E8 = 100.0 °C). The
+second record overwrote the real value. Per-entity option
+`ignore_extended: true` makes the entity use only 0x42 records.
+Same option and semantics as upstream nliaudat/esp_canbus 645c674; drop
+this patch when re-vendoring a ref that has it.
+---
+diff --git a/__init__.py b/__init__.py
+index 05b9ff1..3714824 100644
+--- a/__init__.py
++++ b/__init__.py
+@@ -31,6 +31,7 @@ CONF_FUNCTION_NUMBER = "function_number"
+ CONF_DATAPOINT = "datapoint"
+ CONF_DECIMAL = "decimal"
+ CONF_VALUES = "values"
++CONF_IGNORE_EXTENDED = "ignore_extended"
+ CONF_LANGUAGE = "language"
+ CONF_NAME_PREFIX = "name_prefix"
+ CONF_BOOT_REFRESH_DELAY = "boot_refresh_delay"
+diff --git a/sensor.py b/sensor.py
+index aa12693..ed73260 100644
+--- a/sensor.py
++++ b/sensor.py
+@@ -7,6 +7,7 @@ from . import (
+     CONF_DATAPOINT,
+     CONF_FUNCTION_GROUP,
+     CONF_FUNCTION_NUMBER,
++    CONF_IGNORE_EXTENDED,
+     CONF_TOPTRONIC_ID,
+     TT_TYPE_OPTIONS,
+     TopTronicComponent,
+@@ -25,6 +26,7 @@ CONFIG_SCHEMA = (
+         {
+             cv.GenerateID(CONF_TOPTRONIC_ID): cv.use_id(TopTronicComponent),
+             cv.Required(CONF_TYPE): cv.enum(TT_TYPE_OPTIONS),
++            cv.Optional(CONF_IGNORE_EXTENDED, default=False): cv.boolean,
+         }
+     )
+     .extend(sensor.sensor_schema(TopTronicSensor))
+@@ -40,6 +42,8 @@ async def to_code(config):
+     cg.add(sens.set_function_group(config[CONF_FUNCTION_GROUP]))
+     cg.add(sens.set_function_number(config[CONF_FUNCTION_NUMBER]))
+     cg.add(sens.set_datapoint(config[CONF_DATAPOINT]))
++    if config[CONF_IGNORE_EXTENDED]:
++        cg.add(sens.set_ignore_extended(True))
+     cg.add(sens.set_type(config[CONF_TYPE]))
+ 
+     cg.add(tt.add_sensor(sens))
+diff --git a/text_sensor.py b/text_sensor.py
+index 8adbb8d..75682e6 100644
+--- a/text_sensor.py
++++ b/text_sensor.py
+@@ -7,6 +7,7 @@ from . import (
+     CONF_DATAPOINT,
+     CONF_FUNCTION_GROUP,
+     CONF_FUNCTION_NUMBER,
++    CONF_IGNORE_EXTENDED,
+     CONF_TOPTRONIC_ID,
+     CONF_VALUES,
+     TopTronicComponent,
+@@ -29,6 +30,7 @@ CONFIG_SCHEMA = cv.All(
+                 cv.ensure_list(cv.string_strict), cv.Length(min=1)
+             ),
+             cv.Required(CONF_VALUES): cv.All(cv.ensure_list(cv.int_), cv.Length(min=1)),
++            cv.Optional(CONF_IGNORE_EXTENDED, default=False): cv.boolean,
+         }
+     )
+     .extend(text_sensor.text_sensor_schema(TopTronicTextSensor))
+@@ -45,6 +47,8 @@ async def to_code(config):
+     cg.add(sens.set_function_group(config[CONF_FUNCTION_GROUP]))
+     cg.add(sens.set_function_number(config[CONF_FUNCTION_NUMBER]))
+     cg.add(sens.set_datapoint(config[CONF_DATAPOINT]))
++    if config[CONF_IGNORE_EXTENDED]:
++        cg.add(sens.set_ignore_extended(True))
+ 
+     for i in range(len(config[CONF_OPTIONS])):
+         value = config[CONF_VALUES][i]
+diff --git a/toptronic.cpp b/toptronic.cpp
+index da53b93..5a2aad3 100644
+--- a/toptronic.cpp
++++ b/toptronic.cpp
+@@ -1615,6 +1615,14 @@ void TopTronic::interpret_message_(const uint8_t *data, size_t len, uint32_t can
+   }
+   TopTronicBase *sensor_base = sensor_it->second;
+ 
++  // 0x56 records look like datapoint descriptors (type/limits) rather than values, e.g.
++  //   FW 0-0-102 (return temp.): 0x42 -> 0x01B9 (44.1),  0x56 -> F0 00 | 00 00 03 E8 (100.0)
++  // Entities flagged ignore_extended only take the plain 0x42 value.
++  if (data[0] == RESPONSE_EXT && sensor_base->ignore_extended()) {
++    TT_LOGD("[SKIP] 0x56 record ignored for %s (ignore_extended)", sensor_base->get_name().c_str());
++    return;
++  }
++
+   // Reject truncated responses before they can unlock write safety or publish
+   // a partial/zero value: the payload must carry at least as many value bytes
+   // as the sensor's configured type decodes (1 for text sensors, 1/2/4/8 for
+diff --git a/toptronic.h b/toptronic.h
+index 0fcfed5..155c330 100644
+--- a/toptronic.h
++++ b/toptronic.h
+@@ -77,6 +77,10 @@ class TopTronicBase : public PollingComponent {
+   void set_function_group(uint8_t function_group) { this->function_group_ = function_group; }
+   void set_function_number(uint8_t function_number) { this->function_number_ = function_number; }
+   void set_datapoint(uint16_t datapoint) { this->datapoint_ = datapoint; }
++  // Use only plain 0x42 RESPONSE records; extended 0x56 records carry the
++  // datapoint's limits (descriptor), not its value, on some devices.
++  void set_ignore_extended(bool v) { this->ignore_extended_ = v; }
++  bool ignore_extended() const { return this->ignore_extended_; }
+ 
+   // Unique entity ID: encodes function_group | function_number | datapoint into a single uint32.
+   // Used as the key in the per-device sensor/input hash maps.
+@@ -102,6 +106,7 @@ class TopTronicBase : public PollingComponent {
+   uint8_t function_group_;
+   uint8_t function_number_;
+   uint16_t datapoint_;
++  bool ignore_extended_{false};
+ 
+   // GET request bytes, built once at setup. Returned by reference to avoid copying on every poll.
+   std::vector<uint8_t> request_data_;

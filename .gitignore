@@ -1,0 +1,13 @@
+# Python / tooling
+.venv/
+__pycache__/
+
+# ESPHome build output and PlatformIO cache
+esphome/.esphome/
+build/
+
+# Secrets (WiFi, API key) - never commit
+esphome/secrets.yaml
+
+# CAN captures may contain data from the customer's installation
+captures/

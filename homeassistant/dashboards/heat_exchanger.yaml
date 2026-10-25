@@ -1,6 +1,9 @@
 # Lovelace dashboard (YAML mode) for the heat exchanger logger: live values,
-# condition KPIs and diagnostics. The energy story (kWh per day/week/month/year)
-# lives in HA's built-in Energy panel, see homeassistant/README.md.
+# condition KPIs and diagnostics.
+# Shows only what this installation delivers: the heat meter (M-Bus) reports no
+# data, so power, flow, energy and the heat transfer capacity (UA = P / LMTD) are
+# not on the dashboard. The HA package still defines them; add the cards back
+# once the meter reports (git history of this file).
 # Register it in configuration.yaml (see homeassistant/README.md):
 #   lovelace:
 #     dashboards:
@@ -21,37 +24,27 @@ views:
         title: Now
         columns: 4
         entities:
-          - entity: sensor.heat_exchanger_logger_heat_power
-            name: Power
-          - entity: sensor.heat_exchanger_logger_primary_flow
-            name: Flow
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heat_generator_status
+            name: Status
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heat_generator_temperature
+            name: Heat generator
           - entity: sensor.heat_exchanger_effectiveness
             name: Effectiveness
           - entity: binary_sensor.heat_exchanger_active
             name: Active
 
-      # Energy per day/week/month/year: HA's built-in Energy panel (sidebar "Energy").
-      - type: entities
-        title: Heat energy
-        entities:
-          - entity: sensor.heat_exchanger_energy_daily
-            name: Today
-          - entity: sensor.heat_exchanger_logger_heat_energy
-            name: Meter total
-          - entity: sensor.heat_exchanger_operating_time_today
-            name: Operating time today
-
+      # Same names and order as the HovalConnect station overview.
       - type: entities
         title: Temperatures
         entities:
           - entity: sensor.heat_exchanger_logger_primary_inlet_temperature
-            name: Primary in
+            name: Primary supply
           - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
-            name: Primary out
-          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
-            name: Secondary in
+            name: Primary return
           - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
-            name: Secondary out
+            name: Secondary supply
+          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
+            name: Secondary return
           - type: divider
           - entity: sensor.heat_exchanger_logger_primary_temperature_drop
             name: Primary ΔT
@@ -59,57 +52,67 @@ views:
             name: Secondary ΔT
           - entity: sensor.heat_exchanger_lmtd
             name: LMTD
+          - entity: sensor.heat_exchanger_operating_time_today
+            name: Operating time today
+
+      # Further TopTronic values that exist on this installation (esphome/packages/hoval_plant.yaml).
+      - type: entities
+        title: Plant (TopTronic)
+        entities:
+          - entity: sensor.infrastruktur_heat_exchanger_logger_outdoor_temperature
+            name: Outdoor (AF)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_district_heating_valve
+            name: District heating valve (YFW)
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_return_temperature_limitation
+            name: Return limitation
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_power_limitation
+            name: Power limitation
+          - type: divider
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_status
+            name: Heating circuit
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_temperature
+            name: Heating circuit supply (VF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_setpoint
+            name: Supply setpoint
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_heating_circuit_pump
+            name: Heating pump (MK1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_mixer
+            name: Mixer drive (YK1)
+          - type: divider
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_status
+            name: Hot water
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_temperature
+            name: Hot water (SF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_setpoint
+            name: Hot water setpoint
+          - entity: binary_sensor.infrastruktur_heat_exchanger_logger_hot_water_charging_pump
+            name: Charging pump (SLP1)
 
       - type: history-graph
-        title: Temperatures (24 h)
+        title: Plant temperatures (24 h)
         hours_to_show: 24
         entities:
           - entity: sensor.heat_exchanger_logger_primary_inlet_temperature
-            name: Primary in
+            name: Primary supply
           - entity: sensor.heat_exchanger_logger_primary_outlet_temperature
-            name: Primary out
-          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
-            name: Secondary in
+            name: Primary return
           - entity: sensor.heat_exchanger_logger_secondary_outlet_temperature
-            name: Secondary out
-
-      - type: history-graph
-        title: Heat power (24 h)
-        hours_to_show: 24
-        entities:
-          - entity: sensor.heat_exchanger_logger_heat_power
-            name: Power
-          - entity: sensor.heat_exchanger_power_24h_mean
-            name: 24 h mean
+            name: Secondary supply
+          - entity: sensor.heat_exchanger_logger_secondary_inlet_temperature
+            name: Secondary return
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heat_generator_temperature
+            name: Heat generator
+          - entity: sensor.infrastruktur_heat_exchanger_logger_heating_circuit_supply_temperature
+            name: Heating circuit supply (VF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_hot_water_temperature
+            name: Hot water (SF1)
+          - entity: sensor.infrastruktur_heat_exchanger_logger_outdoor_temperature
+            name: Outdoor (AF)
 
   - title: Condition
     path: condition
     icon: mdi:wrench-clock
     cards:
-      - type: entities
-        title: Performance
-        entities:
-          - entity: sensor.heat_exchanger_ua
-            name: UA (now)
-          - entity: sensor.heat_exchanger_ua_24h_mean
-            name: UA 24 h mean
-          - entity: input_number.heat_exchanger_ua_reference
-            name: UA reference (clean)
-          - entity: sensor.heat_exchanger_ua_relative
-            name: UA relative
-          - entity: input_number.heat_exchanger_active_threshold
-            name: Active threshold
-
-      - type: statistics-graph
-        title: UA trend, daily mean (fouling indicator)
-        chart_type: line
-        period: day
-        days_to_show: 180
-        stat_types: [mean]
-        entities:
-          - entity: sensor.heat_exchanger_ua
-            name: UA
-
       - type: statistics-graph
         title: Effectiveness, daily mean
         chart_type: line
@@ -119,6 +122,20 @@ views:
         entities:
           - entity: sensor.heat_exchanger_effectiveness
             name: Effectiveness
+
+      - type: statistics-graph
+        title: Temperature differences, daily mean
+        chart_type: line
+        period: day
+        days_to_show: 180
+        stat_types: [mean]
+        entities:
+          - entity: sensor.heat_exchanger_logger_primary_temperature_drop
+            name: Primary ΔT
+          - entity: sensor.heat_exchanger_logger_secondary_temperature_rise
+            name: Secondary ΔT
+          - entity: sensor.heat_exchanger_lmtd
+            name: LMTD
 
   - title: Diagnostics
     path: diagnostics
@@ -133,8 +150,6 @@ views:
             name: CAN frame rate
           - entity: binary_sensor.heat_exchanger_logger_heat_exchanger_signal_missing
             name: Signal missing
-          - entity: sensor.heat_exchanger_logger_heat_meter_status
-            name: Heat meter status (M-bus)
           - entity: sensor.heat_exchanger_logger_toptronic_last_warning
             name: TopTronic last warning
           - entity: switch.heat_exchanger_logger_can_candump_debug

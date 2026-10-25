@@ -31,6 +31,7 @@ CONF_FUNCTION_NUMBER = "function_number"
 CONF_DATAPOINT = "datapoint"
 CONF_DECIMAL = "decimal"
 CONF_VALUES = "values"
+CONF_IGNORE_EXTENDED = "ignore_extended"
 CONF_LANGUAGE = "language"
 CONF_NAME_PREFIX = "name_prefix"
 CONF_BOOT_REFRESH_DELAY = "boot_refresh_delay"
@@ -45,6 +46,7 @@ CONF_REFRESH_RETRY_INTERVAL_MS = "refresh_retry_interval_ms"
 CONF_WRITE_MIN_INTERVAL = "write_min_interval"
 CONF_REJECT_WRITES_BEFORE_READ = "reject_writes_before_read"
 CONF_PRESETS = "presets"
+CONF_GATEWAY_NODE_ID = "gateway_node_id"
 
 LANGS = ("de", "en", "fr", "it")
 
@@ -312,6 +314,10 @@ CONFIG_SCHEMA = cv.All(
             # false: generate no preset entities; only `platform: toptronic`
             # entities defined in the YAML are polled (small, read-only setups).
             cv.Optional(CONF_PRESETS, default=True): cv.boolean,
+            # Sender node id (CAN ID bits 21-11) of this gateway. Default: GW (1153)
+            # | device_addr. Set it when another gateway (e.g. HovalConnect, node
+            # 0x481) is already on the bus, so the two never send with the same ID.
+            cv.Optional(CONF_GATEWAY_NODE_ID): cv.int_range(min=1, max=0x7FE),
         }
     ).extend(cv.COMPONENT_SCHEMA),
     _validate_preset,
@@ -467,6 +473,8 @@ async def to_code(config):
     device_type = get_device_type(config["device_type"])
     cg.add(var.set_device_type(device_type))
     cg.add(var.set_device_addr(config[CONF_DEVICE_ADDR]))
+    if CONF_GATEWAY_NODE_ID in config:
+        cg.add(var.set_gateway_node_id(config[CONF_GATEWAY_NODE_ID]))
     cg.add(var.set_boot_refresh_delay(config[CONF_BOOT_REFRESH_DELAY]))
     cg.add(var.set_max_pending_messages(config[CONF_MAX_PENDING_MESSAGES]))
     cg.add(var.set_max_pending_age_ms(config[CONF_MAX_PENDING_AGE]))

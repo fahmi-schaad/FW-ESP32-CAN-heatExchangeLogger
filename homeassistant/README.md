@@ -25,16 +25,20 @@ It provides:
 | Entity | What |
 |--------|------|
 | `sensor.heat_exchanger_energy_{daily,weekly,monthly,yearly}` | Heat per period (utility meters, for automations/cards; charts are in the Energy panel) |
-| `binary_sensor.heat_exchanger_active` | Power above `input_number.heat_exchanger_active_threshold` |
+| `binary_sensor.heat_exchanger_active` | Power above `input_number.heat_exchanger_active_threshold`; without heat meter data: TopTronic heat generator status "Heating" |
 | `sensor.heat_exchanger_effectiveness` | Thermal effectiveness ε = Q / Q_max [%] |
 | `sensor.heat_exchanger_lmtd` | Log-mean temperature difference (counterflow) [K] |
-| `sensor.heat_exchanger_ua` | UA = P / LMTD [kW/K]: heat transfer capability |
-| `sensor.heat_exchanger_ua_relative` | 24 h mean UA vs. clean reference [%]: fouling indicator |
+| `sensor.heat_exchanger_ua` | Heat transfer capacity UA = P / LMTD [kW/K] |
+| `sensor.heat_exchanger_ua_relative` | 24 h mean heat transfer capacity vs. clean reference [%]: fouling indicator |
 | `sensor.heat_exchanger_power_24h_{mean,max}` | Rolling statistics |
 | `sensor.heat_exchanger_operating_time_today` | Hours active today |
-| Automations | Notification on CAN signal loss (10 min), and on UA < 80 % for 24 h |
+| Automations | Notification on CAN signal loss (10 min), and on heat transfer capacity < 80 % for 24 h |
 
 ## 3. Dashboard
+
+The dashboard shows only values this installation delivers. The heat meter (M-Bus) reports
+no data (HovalConnect shows 0 too), so power, flow, energy and the heat transfer capacity
+are left out until it does.
 
 Copy `dashboards/heat_exchanger.yaml` to `<config>/dashboards/heat_exchanger.yaml` and add:
 
@@ -70,15 +74,15 @@ Requirements the sensor already meets: `device_class: energy`, `state_class: tot
 unit `kWh`. The firmware drops zero and decreasing glitch readings, so a bus glitch cannot
 show up as a huge fake consumption spike.
 
-## 5. Setting the UA reference (fouling detection)
+## 5. Setting the heat transfer capacity reference (fouling detection)
 
 After commissioning or after cleaning the heat exchanger:
 1. Let it run under typical load for a day.
 2. Read `sensor.heat_exchanger_ua_24h_mean`.
 3. Enter that value in `input_number.heat_exchanger_ua_reference`.
 
-`UA relative` then tracks the heat transfer capability against the clean state. A slow decline
-means fouling or scaling. UA also depends somewhat on flow rates, so compare periods with similar load.
+`Heat transfer capacity relative` then tracks it against the clean state. A slow decline
+means fouling or scaling. The heat transfer capacity also depends somewhat on flow rates, so compare periods with similar load.
 
 ## Data retention
 

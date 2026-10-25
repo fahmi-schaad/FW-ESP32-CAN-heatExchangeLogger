@@ -1,0 +1,103 @@
+From: fahmi-schaad <f.m.schaad@gmail.com>
+Date: Wed, 21 Oct 2026 22:45:00 +0200
+Subject: [PATCH] toptronic: configurable gateway sender node id
+
+New hub option 'gateway_node_id'. The component always sent as GW (1153) |
+device_addr, i.e. node 0x481 for device address 1. That is the same ID a
+HovalConnect gateway uses on the bus, so two nodes sent with one CAN ID.
+With the option set, requests are sent with that sender node id instead.
+---
+diff --git a/__init__.py b/__init__.py
+--- a/__init__.py
++++ b/__init__.py
+@@ -45,6 +45,7 @@
+ CONF_WRITE_MIN_INTERVAL = "write_min_interval"
+ CONF_REJECT_WRITES_BEFORE_READ = "reject_writes_before_read"
+ CONF_PRESETS = "presets"
++CONF_GATEWAY_NODE_ID = "gateway_node_id"
+ 
+ LANGS = ("de", "en", "fr", "it")
+ 
+@@ -312,6 +313,10 @@
+             # false: generate no preset entities; only `platform: toptronic`
+             # entities defined in the YAML are polled (small, read-only setups).
+             cv.Optional(CONF_PRESETS, default=True): cv.boolean,
++            # Sender node id (CAN ID bits 21-11) of this gateway. Default: GW (1153)
++            # | device_addr. Set it when another gateway (e.g. HovalConnect, node
++            # 0x481) is already on the bus, so the two never send with the same ID.
++            cv.Optional(CONF_GATEWAY_NODE_ID): cv.int_range(min=1, max=0x7FE),
+         }
+     ).extend(cv.COMPONENT_SCHEMA),
+     _validate_preset,
+@@ -467,6 +472,8 @@
+     device_type = get_device_type(config["device_type"])
+     cg.add(var.set_device_type(device_type))
+     cg.add(var.set_device_addr(config[CONF_DEVICE_ADDR]))
++    if CONF_GATEWAY_NODE_ID in config:
++        cg.add(var.set_gateway_node_id(config[CONF_GATEWAY_NODE_ID]))
+     cg.add(var.set_boot_refresh_delay(config[CONF_BOOT_REFRESH_DELAY]))
+     cg.add(var.set_max_pending_messages(config[CONF_MAX_PENDING_MESSAGES]))
+     cg.add(var.set_max_pending_age_ms(config[CONF_MAX_PENDING_AGE]))
+diff --git a/toptronic.h b/toptronic.h
+--- a/toptronic.h
++++ b/toptronic.h
+@@ -371,6 +371,7 @@
+   void set_device_type(uint16_t device_type) { this->device_type_ = device_type; }
+   void set_device_addr(uint8_t device_addr) { this->device_addr_ = device_addr; }
+   uint16_t get_device_id() { return this->device_type_ | this->device_addr_; }
++  void set_gateway_node_id(uint16_t node_id) { this->gateway_node_id_ = node_id; }
+ 
+   // Delay before the one-shot post-boot refresh; 0 disables it.
+   void set_boot_refresh_delay(uint32_t ms) { this->boot_refresh_delay_ms_ = ms; }
+@@ -480,6 +481,9 @@
+   // CAN address of this gateway node (used when building outgoing CAN IDs).
+   uint16_t device_type_;
+   uint8_t device_addr_;
++  // Sender node id of this gateway; 0 = GW (1153) | device_addr_.
++  uint16_t gateway_node_id_{0};
++  uint16_t sender_node_id_() const;
+ 
+   // Commands marshalled from other tasks into the main loop task.
+   // Enumerator names are UPPER_SNAKE_CASE per §5.3; values stay 0/1/2.
+diff --git a/toptronic.cpp b/toptronic.cpp
+--- a/toptronic.cpp
++++ b/toptronic.cpp
+@@ -274,6 +274,12 @@
+ //   bits 28-22 : fixed 0x7F priority/type marker
+ //   bits 21-11 : sender node ID
+ //   bits 10-0  : receiver node ID (or broadcast mask)
++uint16_t TopTronic::sender_node_id_() const {
++  if (this->gateway_node_id_ != 0)
++    return this->gateway_node_id_;
++  return GATEWAY_DEVICE_TYPE | this->device_addr_;
++}
++
+ uint32_t build_can_id(uint16_t sender_id, uint16_t receiver_mask) {
+   return (0x7F << 22) | (sender_id << 11) | receiver_mask;
+ }
+@@ -518,7 +524,7 @@
+       auto *sensor = s.second;
+       sensor->cache_request_data();  // build once, avoid per-poll heap alloc
+       auto *canbus = this->canbus_;
+-      uint32_t can_id = build_can_id(GATEWAY_DEVICE_TYPE | this->device_addr_, this->get_device_id());
++      uint32_t can_id = build_can_id(this->sender_node_id_(), this->get_device_id());
+ 
+       // Capture the receiver device id (e.g. 0x208 for HV+8, 0x408 for BM+8) so the
+       // [GET] log shows exactly which bus device is being polled.
+@@ -659,7 +665,7 @@
+     for (const auto &i : device->get_inputs()) {
+       auto *input = i.second;
+       auto *canbus = this->canbus_;
+-      uint32_t can_id = build_can_id(GATEWAY_DEVICE_TYPE | this->device_addr_, device_id);
++      uint32_t can_id = build_can_id(this->sender_node_id_(), device_id);
+ 
+       input->add_on_set_callback([this, canbus, can_id, device_id, input](const std::vector<uint8_t> &data) -> void {
+         const uint32_t id = input->get_id();
+@@ -1136,6 +1142,7 @@
+   }
+   ESP_LOGCONFIG(TAG, "TopTronic:");
+   ESP_LOGCONFIG(TAG, "  Device type: 0x%04X, device address: 0x%02X", this->device_type_, this->device_addr_);
++  ESP_LOGCONFIG(TAG, "  Gateway sender node id: 0x%03X", (unsigned) this->sender_node_id_());
+   ESP_LOGCONFIG(TAG, "  Devices: %u, sensors: %u, inputs: %u", (unsigned) this->devices_.size(),
+                 (unsigned) sensor_count, (unsigned) input_count);
+   ESP_LOGCONFIG(TAG, "  Boot refresh delay: %u ms", (unsigned) this->boot_refresh_delay_ms_);

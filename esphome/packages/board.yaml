@@ -37,8 +37,19 @@ logger:
     - level: WARN
       then:
         - lambda: |-
-            if (strcmp(tag, "toptronic") == 0)
-              id(toptronic_last_warning).publish_state(std::string(message));
+            if (strcmp(tag, "toptronic") == 0) {
+              // Drop the ANSI color codes (ESC[...m) the logger adds to the message.
+              std::string clean;
+              for (const char *p = message; *p; p++) {
+                if (*p == '\033') {
+                  while (*p && *p != 'm') p++;
+                  if (!*p) break;
+                  continue;
+                }
+                clean += *p;
+              }
+              id(toptronic_last_warning).publish_state(clean);
+            }
 
 api:
   encryption:

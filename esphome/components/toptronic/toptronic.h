@@ -77,6 +77,10 @@ class TopTronicBase : public PollingComponent {
   void set_function_group(uint8_t function_group) { this->function_group_ = function_group; }
   void set_function_number(uint8_t function_number) { this->function_number_ = function_number; }
   void set_datapoint(uint16_t datapoint) { this->datapoint_ = datapoint; }
+  // Use only plain 0x42 RESPONSE records; extended 0x56 records carry the
+  // datapoint's limits (descriptor), not its value, on some devices.
+  void set_ignore_extended(bool v) { this->ignore_extended_ = v; }
+  bool ignore_extended() const { return this->ignore_extended_; }
 
   // Unique entity ID: encodes function_group | function_number | datapoint into a single uint32.
   // Used as the key in the per-device sensor/input hash maps.
@@ -102,6 +106,7 @@ class TopTronicBase : public PollingComponent {
   uint8_t function_group_;
   uint8_t function_number_;
   uint16_t datapoint_;
+  bool ignore_extended_{false};
 
   // GET request bytes, built once at setup. Returned by reference to avoid copying on every poll.
   std::vector<uint8_t> request_data_;
@@ -371,6 +376,7 @@ class TopTronic : public Component {
   void set_device_type(uint16_t device_type) { this->device_type_ = device_type; }
   void set_device_addr(uint8_t device_addr) { this->device_addr_ = device_addr; }
   uint16_t get_device_id() { return this->device_type_ | this->device_addr_; }
+  void set_gateway_node_id(uint16_t node_id) { this->gateway_node_id_ = node_id; }
 
   // Delay before the one-shot post-boot refresh; 0 disables it.
   void set_boot_refresh_delay(uint32_t ms) { this->boot_refresh_delay_ms_ = ms; }
@@ -480,6 +486,9 @@ class TopTronic : public Component {
   // CAN address of this gateway node (used when building outgoing CAN IDs).
   uint16_t device_type_;
   uint8_t device_addr_;
+  // Sender node id of this gateway; 0 = GW (1153) | device_addr_.
+  uint16_t gateway_node_id_{0};
+  uint16_t sender_node_id_() const;
 
   // Commands marshalled from other tasks into the main loop task.
   // Enumerator names are UPPER_SNAKE_CASE per §5.3; values stay 0/1/2.

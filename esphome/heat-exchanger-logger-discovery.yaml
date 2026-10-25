@@ -15,8 +15,10 @@ substitutions:
   friendly_name: Heat Exchanger Logger
   can_tx_pin: GPIO22
   can_rx_pin: GPIO21
+  can_mode: LISTENONLY       # NORMAL polls ~250 datapoints: only briefly, for commissioning
   hoval_device_type: FW       # keep in sync with heat-exchanger-logger.yaml
   hoval_device_addr: "1"
+  hoval_gateway_node_id: "0x48A"  # keep in sync with heat-exchanger-logger.yaml
   hoval_language: en
   hoval_presets: "true"
 

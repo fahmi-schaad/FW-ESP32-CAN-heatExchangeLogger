@@ -71,7 +71,8 @@ def esphome_entities() -> set[str]:
 
 def ha_package_entities(pkg: dict) -> set[str]:
     found = {f"input_number.{k}" for k in pkg.get("input_number") or {}}
-    found |= {f"sensor.{k}" for k in pkg.get("utility_meter") or {}}
+    # HA derives a utility_meter's entity ID from its name (if set), not its key.
+    found |= {f"sensor.{slugify(v.get('name') or k)}" for k, v in (pkg.get("utility_meter") or {}).items()}
     for block in pkg.get("template") or []:
         for domain in ("sensor", "binary_sensor"):
             found |= {f"{domain}.{slugify(e['name'])}" for e in block.get(domain) or []}
