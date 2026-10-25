@@ -14,9 +14,15 @@
 # ---------------------------------------------------------------------------
 # Display names. "UA" (= P / LMTD) is shown as "heat transfer capacity". Set here
 # so the entity IDs (sensor.heat_exchanger_ua...) stay stable on every install.
+# Same for two plant entities: YK1 reports a signed drive command (+ opening,
+# - closing), not a position; MK1 is the heating pump.
 # ---------------------------------------------------------------------------
 homeassistant:
   customize:
+    sensor.infrastruktur_heat_exchanger_logger_heating_circuit_mixer:
+      friendly_name: Heating circuit mixer drive
+    binary_sensor.infrastruktur_heat_exchanger_logger_heating_circuit_pump:
+      friendly_name: Heating pump
     sensor.heat_exchanger_ua:
       friendly_name: Heat exchanger heat transfer capacity
     sensor.heat_exchanger_ua_24h_mean:
@@ -78,12 +84,18 @@ utility_meter:
 # ---------------------------------------------------------------------------
 template:
   - binary_sensor:
+      # Heat power above the threshold. Without heat meter data (this installation's
+      # M-Bus meter reports nothing): the TopTronic heat generator status "Heating".
       - name: Heat exchanger active
         unique_id: heat_exchanger_active
         icon: mdi:heat-wave
         state: >
-          {{ states('sensor.heat_exchanger_logger_heat_power') | float(0)
-             > states('input_number.heat_exchanger_active_threshold') | float(0.5) }}
+          {% if has_value('sensor.heat_exchanger_logger_heat_power') %}
+            {{ states('sensor.heat_exchanger_logger_heat_power') | float(0)
+               > states('input_number.heat_exchanger_active_threshold') | float(0.5) }}
+          {% else %}
+            {{ is_state('sensor.infrastruktur_heat_exchanger_logger_heat_generator_status', 'Heating') }}
+          {% endif %}
         delay_on: "00:01:00"
         delay_off: "00:02:00"
 

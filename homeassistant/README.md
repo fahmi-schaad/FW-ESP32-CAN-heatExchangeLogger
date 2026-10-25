@@ -25,7 +25,7 @@ It provides:
 | Entity | What |
 |--------|------|
 | `sensor.heat_exchanger_energy_{daily,weekly,monthly,yearly}` | Heat per period (utility meters, for automations/cards; charts are in the Energy panel) |
-| `binary_sensor.heat_exchanger_active` | Power above `input_number.heat_exchanger_active_threshold` |
+| `binary_sensor.heat_exchanger_active` | Power above `input_number.heat_exchanger_active_threshold`; without heat meter data: TopTronic heat generator status "Heating" |
 | `sensor.heat_exchanger_effectiveness` | Thermal effectiveness ε = Q / Q_max [%] |
 | `sensor.heat_exchanger_lmtd` | Log-mean temperature difference (counterflow) [K] |
 | `sensor.heat_exchanger_ua` | Heat transfer capacity UA = P / LMTD [kW/K] |
@@ -35,6 +35,10 @@ It provides:
 | Automations | Notification on CAN signal loss (10 min), and on heat transfer capacity < 80 % for 24 h |
 
 ## 3. Dashboard
+
+The dashboard shows only values this installation delivers. The heat meter (M-Bus) reports
+no data (HovalConnect shows 0 too), so power, flow, energy and the heat transfer capacity
+are left out until it does.
 
 Copy `dashboards/heat_exchanger.yaml` to `<config>/dashboards/heat_exchanger.yaml` and add:
 
